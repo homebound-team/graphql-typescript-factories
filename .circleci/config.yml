@@ -1,0 +1,45 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@1.1.4
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - build:
+          context: npm
+          filters:
+            branches:
+              ignore:
+                - master
+      - build:
+          context: npm
+          publish: true
+          filters:
+            branches:
+              only:
+                - master
+
+jobs:
+  build:
+    parameters:
+      publish:
+        type: boolean
+        default: false
+    docker:
+      - image: circleci/node:12.7
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc'
+      - node/with-cache:
+          steps:
+            - run: npm install
+      - run: npm run build
+      - when:
+          condition: <<parameters.publish>>
+          steps:
+            - run: ./bump.sh package.json
+            - run: npm publish
+

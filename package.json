@@ -1,0 +1,33 @@
+{
+  "name": "@homebound/graphql-typescript-factories",
+  "version": "1.0.0-bump",
+  "main": "./build/index.js",
+  "types": "./build/",
+  "scripts": {
+    "build": "rm -rf build; ./node_modules/.bin/tsc",
+    "prepare": "npm run build",
+    "test": "./node_modules/.bin/jest --watch",
+    "coverage": "./node_modules/.bin/jest --collectCoverage",
+    "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'"
+  },
+  "dependencies": {
+    "@graphql-codegen/plugin-helpers": "^1.12.1",
+    "change-case": "^4.1.1",
+    "graphql": "^14.6.0",
+    "ts-poet": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^6.5.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "husky": "^3.0.9",
+    "jest": "^24.9.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.6.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run format"
+    }
+  }
+}
