@@ -15,7 +15,7 @@ import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
 import PluginOutput = Types.PluginOutput;
 
 /** Generates `newProject({ ... })` factory functions in our `graphql-types` codegen output. */
-export const index: PluginFunction = async (schema, documents) => {
+export const plugin: PluginFunction = async (schema, documents) => {
   const chunks: Code[] = [];
   generateFactoryFunctions(schema, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
