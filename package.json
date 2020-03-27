@@ -11,7 +11,7 @@
     "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'"
   },
   "dependencies": {
-    "@graphql-codegen/plugin-helpers": "^1.12.1",
+    "@graphql-codegen/plugin-helpers": "^1.13.1",
     "change-case": "^4.1.1",
     "graphql": "^14.6.0",
     "ts-poet": "^3.0.0"
