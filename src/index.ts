@@ -92,23 +92,23 @@ function newFactory(type: GraphQLObjectType): Code {
   return code`
     type ${type.name}Options = Partial<${basePartial} ${maybeEnumOverrides}>;
 
-    export function new${type.name}(options: ${type.name}Options = {}): ${type.name} {
-      return {
-        __typename: '${type.name}',
-        ${Object.values(type.getFields()).map(f => {
-          if (f.type instanceof GraphQLNonNull) {
-            const fieldType = f.type.ofType;
-            if (isEnumDetailObject(fieldType)) {
-              const enumType = getRealEnumForEnumDetailObject(fieldType);
-              return `${f.name}: enumOrDetailOf${enumType.name}(options.${f.name}),`;
-            } else {
-              return `${f.name}: options.${f.name} ?? ${getInitializer(type, f, fieldType)},`;
-            }
+    export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
+      const o = cache["${type.name}"] = {} as ${type.name};
+      o.__typename = '${type.name}';
+      ${Object.values(type.getFields()).map(f => {
+        if (f.type instanceof GraphQLNonNull) {
+          const fieldType = f.type.ofType;
+          if (isEnumDetailObject(fieldType)) {
+            const enumType = getRealEnumForEnumDetailObject(fieldType);
+            return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
           } else {
-            return `${f.name}: options.${f.name} ?? null,`;
+            return `o.${f.name} = options.${f.name} ?? ${getInitializer(type, f, fieldType)};`;
           }
-        })}
-      }
+        } else {
+          return `o.${f.name} = options.${f.name} ?? null;`;
+        }
+      })}
+      return o;
     }`;
 }
 
@@ -119,7 +119,7 @@ function getInitializer(
   type: GraphQLOutputType,
 ): string {
   if (type instanceof GraphQLObjectType) {
-    return `new${type.name}()`;
+    return `cache["${type.name}"] as ${type.name} ?? new${type.name}({}, cache)`;
   } else if (type instanceof GraphQLList) {
     // We could potentially make a dummy entry in every list, but would we risk infinite loops between parents/children?
     return `[]`;
