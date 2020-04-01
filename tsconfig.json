@@ -6,6 +6,7 @@
     "strict": true,
     "esModuleInterop": false,
     "skipLibCheck": true,
+    "types": ["jest"],
     "outDir": "build"
   },
   "includes": ["src"]
