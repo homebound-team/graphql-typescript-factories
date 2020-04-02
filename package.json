@@ -1,7 +1,7 @@
 {
   "name": "@homebound/graphql-typescript-factories",
   "version": "1.0.0-bump",
-  "main": "./build/index.js",
+  "main": "./build/src/index.js",
   "types": "./build/",
   "scripts": {
     "build": "rm -rf build; ./node_modules/.bin/tsc",
