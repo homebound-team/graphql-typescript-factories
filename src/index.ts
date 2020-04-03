@@ -90,7 +90,7 @@ function newFactory(type: GraphQLObjectType): Code {
   const maybeEnumOverrides = enumOverrides.length > 0 ? ["", ...enumOverrides].join(" & ") : "";
 
   return code`
-    type ${type.name}Options = Partial<${basePartial} ${maybeEnumOverrides}>;
+    export type ${type.name}Options = Partial<${basePartial} ${maybeEnumOverrides}>;
 
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};
