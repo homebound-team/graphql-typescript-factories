@@ -82,7 +82,7 @@ export enum Working {
 }
 
 
-type AuthorOptions = Partial<Author>;
+export type AuthorOptions = Partial<Author>;
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
@@ -94,7 +94,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.birthday = options.birthday ?? null;
   return o;
 }
-type AuthorSummaryOptions = Partial<AuthorSummary>;
+export type AuthorSummaryOptions = Partial<AuthorSummary>;
 
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (cache["AuthorSummary"] = {} as AuthorSummary);
@@ -104,7 +104,7 @@ export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Reco
   o.amountOfSales = options.amountOfSales ?? null;
   return o;
 }
-type BookOptions = Partial<Book>;
+export type BookOptions = Partial<Book>;
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (cache["Book"] = {} as Book);
@@ -112,7 +112,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   return o;
 }
-type SaveAuthorResultOptions = Partial<SaveAuthorResult>;
+export type SaveAuthorResultOptions = Partial<SaveAuthorResult>;
 
 export function newSaveAuthorResult(
   options: SaveAuthorResultOptions = {},
