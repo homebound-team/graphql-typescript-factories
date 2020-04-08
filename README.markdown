@@ -105,3 +105,7 @@ If this feature/pattern is problematic for users who don't use it, we can add a 
 - Support "number of children"
 - Support customizations like "if building DAG, reuse same project vs. make new project teach time"
 - Support providing a level of the DAG N-levels away (i.e. "create project but use this for the task")
+
+## License
+
+MIT
