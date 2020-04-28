@@ -17,6 +17,7 @@ export type Author = {
   popularity: Popularity;
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
+  books: Array<Book>;
 };
 
 export type AuthorInput = {
@@ -82,29 +83,75 @@ export enum Working {
 }
 
 
-export type AuthorOptions = Partial<Author>;
+export type AuthorOptions = DeepPartial<Author>;
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
   o.__typename = "Author";
   o.name = options.name ?? "name";
-  o.summary = options.summary ?? (cache["AuthorSummary"] as AuthorSummary) ?? newAuthorSummary({}, cache);
+  o.summary = maybeNewAuthorSummary(options.summary, cache);
   o.popularity = options.popularity ?? Popularity.Low;
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
+  o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
   return o;
 }
-export type AuthorSummaryOptions = Partial<AuthorSummary>;
+
+function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, any>): Author {
+  if (value === undefined) {
+    return (cache["Author"] as Author) ?? newAuthor({}, cache);
+  } else if (value.__typename) {
+    return value as Author;
+  } else {
+    return newAuthor(value, cache);
+  }
+}
+
+function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Record<string, any>): Author | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as Author;
+  } else {
+    return newAuthor(value, cache);
+  }
+}
+
+export type AuthorSummaryOptions = DeepPartial<AuthorSummary>;
 
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (cache["AuthorSummary"] = {} as AuthorSummary);
   o.__typename = "AuthorSummary";
-  o.author = options.author ?? (cache["Author"] as Author) ?? newAuthor({}, cache);
+  o.author = maybeNewAuthor(options.author, cache);
   o.numberOfBooks = options.numberOfBooks ?? 0;
   o.amountOfSales = options.amountOfSales ?? null;
   return o;
 }
-export type BookOptions = Partial<Book>;
+
+function maybeNewAuthorSummary(value: AuthorSummaryOptions | undefined, cache: Record<string, any>): AuthorSummary {
+  if (value === undefined) {
+    return (cache["AuthorSummary"] as AuthorSummary) ?? newAuthorSummary({}, cache);
+  } else if (value.__typename) {
+    return value as AuthorSummary;
+  } else {
+    return newAuthorSummary(value, cache);
+  }
+}
+
+function maybeNewOrNullAuthorSummary(
+  value: AuthorSummaryOptions | undefined | null,
+  cache: Record<string, any>,
+): AuthorSummary | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as AuthorSummary;
+  } else {
+    return newAuthorSummary(value, cache);
+  }
+}
+
+export type BookOptions = DeepPartial<Book>;
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (cache["Book"] = {} as Book);
@@ -112,7 +159,28 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   return o;
 }
-export type SaveAuthorResultOptions = Partial<SaveAuthorResult>;
+
+function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>): Book {
+  if (value === undefined) {
+    return (cache["Book"] as Book) ?? newBook({}, cache);
+  } else if (value.__typename) {
+    return value as Book;
+  } else {
+    return newBook(value, cache);
+  }
+}
+
+function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record<string, any>): Book | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as Book;
+  } else {
+    return newBook(value, cache);
+  }
+}
+
+export type SaveAuthorResultOptions = DeepPartial<SaveAuthorResult>;
 
 export function newSaveAuthorResult(
   options: SaveAuthorResultOptions = {},
@@ -120,6 +188,43 @@ export function newSaveAuthorResult(
 ): SaveAuthorResult {
   const o = (cache["SaveAuthorResult"] = {} as SaveAuthorResult);
   o.__typename = "SaveAuthorResult";
-  o.author = options.author ?? (cache["Author"] as Author) ?? newAuthor({}, cache);
+  o.author = maybeNewAuthor(options.author, cache);
   return o;
 }
+
+function maybeNewSaveAuthorResult(
+  value: SaveAuthorResultOptions | undefined,
+  cache: Record<string, any>,
+): SaveAuthorResult {
+  if (value === undefined) {
+    return (cache["SaveAuthorResult"] as SaveAuthorResult) ?? newSaveAuthorResult({}, cache);
+  } else if (value.__typename) {
+    return value as SaveAuthorResult;
+  } else {
+    return newSaveAuthorResult(value, cache);
+  }
+}
+
+function maybeNewOrNullSaveAuthorResult(
+  value: SaveAuthorResultOptions | undefined | null,
+  cache: Record<string, any>,
+): SaveAuthorResult | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as SaveAuthorResult;
+  } else {
+    return newSaveAuthorResult(value, cache);
+  }
+}
+
+type Builtin = Date | Function | Uint8Array | string | number | undefined;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;

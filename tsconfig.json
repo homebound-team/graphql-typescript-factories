@@ -9,5 +9,6 @@
     "types": ["jest"],
     "outDir": "build"
   },
-  "includes": ["src"]
+  "includes": ["src"],
+  "exclude": ["integration"]
 }

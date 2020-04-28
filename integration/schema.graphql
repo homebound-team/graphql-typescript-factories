@@ -5,6 +5,7 @@ type Author {
   popularity: Popularity!
   working: Working
   birthday: Date
+  books: [Book!]!
 }
 
 # A DTO that is just some fields

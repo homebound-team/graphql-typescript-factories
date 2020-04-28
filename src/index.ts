@@ -19,6 +19,7 @@ export const plugin: PluginFunction = async (schema, documents) => {
   const chunks: Code[] = [];
   generateFactoryFunctions(schema, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
+  addDeepPartial(chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
@@ -90,7 +91,7 @@ function newFactory(type: GraphQLObjectType): Code {
   const maybeEnumOverrides = enumOverrides.length > 0 ? ["", ...enumOverrides].join(" & ") : "";
 
   return code`
-    export type ${type.name}Options = Partial<${basePartial} ${maybeEnumOverrides}>;
+    export type ${type.name}Options = DeepPartial<${basePartial} ${maybeEnumOverrides}>;
 
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};
@@ -101,15 +102,57 @@ function newFactory(type: GraphQLObjectType): Code {
           if (isEnumDetailObject(fieldType)) {
             const enumType = getRealEnumForEnumDetailObject(fieldType);
             return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
+          } else if (fieldType instanceof GraphQLList) {
+            // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
+            // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
+            if (fieldType.ofType instanceof GraphQLObjectType) {
+              const objectType = fieldType.ofType.name;
+              return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull${objectType}(i, cache));`;
+            } else if (
+              fieldType.ofType instanceof GraphQLNonNull &&
+              fieldType.ofType.ofType instanceof GraphQLObjectType
+            ) {
+              const objectType = fieldType.ofType.ofType.name;
+              return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew${objectType}(i, cache));`;
+            } else {
+              return `o.${f.name} = options.${f.name} ?? [];`;
+            }
+          } else if (fieldType instanceof GraphQLObjectType) {
+            return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
           } else {
             return `o.${f.name} = options.${f.name} ?? ${getInitializer(type, f, fieldType)};`;
           }
+        } else if (f.type instanceof GraphQLObjectType) {
+          return `o.${f.name} = maybeNewOrNull${f.type.name}(options.${f.name}, cache);`;
         } else {
           return `o.${f.name} = options.${f.name} ?? null;`;
         }
       })}
       return o;
-    }`;
+    }
+    
+    function maybeNew${type.name}(value: ${type.name}Options | undefined, cache: Record<string, any>): ${type.name} {
+      if (value === undefined) {
+        return cache["${type.name}"] as ${type.name} ?? new${type.name}({}, cache)
+      } else if (value.__typename) {
+        return value as ${type.name};
+      } else {
+        return new${type.name}(value, cache);
+      }
+    }
+    
+    function maybeNewOrNull${type.name}(value: ${type.name}Options | undefined | null, cache: Record<string, any>): ${
+    type.name
+  } | null {
+      if (!value) {
+        return null;
+      } else if (value.__typename) {
+        return value as ${type.name};
+      } else {
+        return new${type.name}(value, cache);
+      }
+    }
+    `;
 }
 
 /** Returns a default value for the given field's type, i.e. strings are "", ints are 0, arrays are []. */
@@ -118,9 +161,7 @@ function getInitializer(
   field: GraphQLField<any, any, any>,
   type: GraphQLOutputType,
 ): string {
-  if (type instanceof GraphQLObjectType) {
-    return `cache["${type.name}"] as ${type.name} ?? new${type.name}({}, cache)`;
-  } else if (type instanceof GraphQLList) {
+  if (type instanceof GraphQLList) {
     // We could potentially make a dummy entry in every list, but would we risk infinite loops between parents/children?
     return `[]`;
   } else if (type instanceof GraphQLEnumType) {
@@ -177,4 +218,19 @@ function shouldCreateFactory(type: GraphQLNamedType): type is GraphQLObjectType 
     type.name !== "Mutation" &&
     type.name !== "Query"
   );
+}
+
+function addDeepPartial(chunks: Code[]): void {
+  chunks.push(code`
+    type Builtin = Date | Function | Uint8Array | string | number | undefined;
+    type DeepPartial<T> = T extends Builtin
+      ? T
+      : T extends Array<infer U>
+      ? Array<DeepPartial<U>>
+      : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+      ? { [K in keyof T]?: DeepPartial<T[K]> }
+      : Partial<T>;
+  `);
 }
