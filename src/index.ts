@@ -54,7 +54,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
             .join(", ")}
         };
 
-        function enumOrDetailOf${enumType.name}(enumOrDetail: ${type.name} | ${enumType.name} | undefined): ${
+        function enumOrDetailOf${enumType.name}(enumOrDetail: Partial<${type.name}> | ${enumType.name} | undefined): ${
       type.name
     } {
           if (enumOrDetail === undefined) {

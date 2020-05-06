@@ -268,7 +268,7 @@ const enumDetailNameOfPopularity = {
   High: "High",
 };
 
-function enumOrDetailOfPopularity(enumOrDetail: PopularityDetail | Popularity | undefined): PopularityDetail {
+function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
   } else if (Object.keys(enumOrDetail).includes("code")) {
