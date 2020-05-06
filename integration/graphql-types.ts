@@ -89,7 +89,9 @@ export enum Working {
 }
 
 
-export type AuthorOptions = DeepPartial<Omit<Author, "popularity"> & { popularity: Popularity | PopularityDetail }>;
+export type AuthorOptions = DeepPartial<Omit<Author, "popularity">> & {
+  popularity?: Popularity | Partial<PopularityDetail>;
+};
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
@@ -268,6 +270,7 @@ const enumDetailNameOfPopularity = {
   High: "High",
 };
 
+// The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
 function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
