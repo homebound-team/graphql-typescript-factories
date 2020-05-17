@@ -14,7 +14,7 @@ export type Author = {
    __typename?: 'Author';
   name: Scalars['String'];
   summary: AuthorSummary;
-  popularity: Popularity;
+  popularity: PopularityDetail;
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
@@ -53,6 +53,12 @@ export enum Popularity {
   High = 'High'
 }
 
+export type PopularityDetail = {
+   __typename?: 'PopularityDetail';
+  code: Popularity;
+  name: Scalars['String'];
+};
+
 export type Query = {
    __typename?: 'Query';
   authors: Array<Author>;
@@ -83,14 +89,16 @@ export enum Working {
 }
 
 
-export type AuthorOptions = DeepPartial<Author>;
+export type AuthorOptions = DeepPartial<Omit<Author, "popularity">> & {
+  popularity?: Popularity | Partial<PopularityDetail>;
+};
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
   o.__typename = "Author";
   o.name = options.name ?? "name";
   o.summary = maybeNewAuthorSummary(options.summary, cache);
-  o.popularity = options.popularity ?? Popularity.Low;
+  o.popularity = enumOrDetailOfPopularity(options.popularity);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
   o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
@@ -148,6 +156,45 @@ function maybeNewOrNullAuthorSummary(
     return value as AuthorSummary;
   } else {
     return newAuthorSummary(value, cache);
+  }
+}
+
+export type PopularityDetailOptions = DeepPartial<PopularityDetail>;
+
+export function newPopularityDetail(
+  options: PopularityDetailOptions = {},
+  cache: Record<string, any> = {},
+): PopularityDetail {
+  const o = (cache["PopularityDetail"] = {} as PopularityDetail);
+  o.__typename = "PopularityDetail";
+  o.code = options.code ?? Popularity.Low;
+  o.name = options.name ?? "Low";
+  return o;
+}
+
+function maybeNewPopularityDetail(
+  value: PopularityDetailOptions | undefined,
+  cache: Record<string, any>,
+): PopularityDetail {
+  if (value === undefined) {
+    return (cache["PopularityDetail"] as PopularityDetail) ?? newPopularityDetail({}, cache);
+  } else if (value.__typename) {
+    return value as PopularityDetail;
+  } else {
+    return newPopularityDetail(value, cache);
+  }
+}
+
+function maybeNewOrNullPopularityDetail(
+  value: PopularityDetailOptions | undefined | null,
+  cache: Record<string, any>,
+): PopularityDetail | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as PopularityDetail;
+  } else {
+    return newPopularityDetail(value, cache);
   }
 }
 
@@ -215,6 +262,25 @@ function maybeNewOrNullSaveAuthorResult(
     return value as SaveAuthorResult;
   } else {
     return newSaveAuthorResult(value, cache);
+  }
+}
+
+const enumDetailNameOfPopularity = {
+  Low: "Low",
+  High: "High",
+};
+
+// The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
+function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popularity | undefined): PopularityDetail {
+  if (enumOrDetail === undefined) {
+    return newPopularityDetail();
+  } else if (Object.keys(enumOrDetail).includes("code")) {
+    return enumOrDetail as PopularityDetail;
+  } else {
+    return newPopularityDetail({
+      code: enumOrDetail as Popularity,
+      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    });
   }
 }
 

@@ -54,7 +54,8 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
             .join(", ")}
         };
 
-        function enumOrDetailOf${enumType.name}(enumOrDetail: ${type.name} | ${enumType.name} | undefined): ${
+        // The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
+        function enumOrDetailOf${enumType.name}(enumOrDetail: Partial<${type.name}> | ${enumType.name} | undefined): ${
       type.name
     } {
           if (enumOrDetail === undefined) {
@@ -82,7 +83,7 @@ function newFactory(type: GraphQLObjectType): Code {
   const enumOverrides = enumFields.map(field => {
     const realEnumName = getRealEnumForEnumDetailObject(field.type).name;
     const detailName = (unwrapNotNull(field.type) as GraphQLObjectType).name;
-    return `{ ${field.name}: ${realEnumName} | ${detailName} }`;
+    return `{ ${field.name}?: ${realEnumName} | Partial<${detailName}> }`;
   });
 
   // Take out the enum fields, and put back in their `enum | enum detail` type unions
@@ -91,7 +92,7 @@ function newFactory(type: GraphQLObjectType): Code {
   const maybeEnumOverrides = enumOverrides.length > 0 ? ["", ...enumOverrides].join(" & ") : "";
 
   return code`
-    export type ${type.name}Options = DeepPartial<${basePartial} ${maybeEnumOverrides}>;
+    export type ${type.name}Options = DeepPartial<${basePartial}> ${maybeEnumOverrides};
 
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};

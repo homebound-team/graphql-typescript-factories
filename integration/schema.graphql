@@ -2,7 +2,7 @@
 type Author {
   name: String!
   summary: AuthorSummary!
-  popularity: Popularity!
+  popularity: PopularityDetail!
   working: Working
   birthday: Date
   books: [Book!]!
@@ -49,10 +49,14 @@ enum Popularity {
   High
 }
 
+type PopularityDetail {
+  code: Popularity!
+  name: String!
+}
+
 enum Working {
   YES
   NO
 }
 
 scalar Date
-
