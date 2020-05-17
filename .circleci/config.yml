@@ -28,18 +28,15 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: circleci/node:12.7
+      - image: circleci/node:erbium
     working_directory: ~/project
     steps:
       - checkout
       - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc'
-      - node/with-cache:
-          steps:
-            - run: npm install
+      - run: npm ci
       - run: npm run build
       - when:
           condition: <<parameters.publish>>
           steps:
             - run: ./bump.sh package.json
             - run: npm publish
-
