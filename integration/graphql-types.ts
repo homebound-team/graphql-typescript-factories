@@ -12,6 +12,7 @@ export type Scalars = {
 /** An entity that will be a mapped typed */
 export type Author = {
    __typename?: 'Author';
+  id: Scalars['ID'];
   name: Scalars['String'];
   summary: AuthorSummary;
   popularity: Popularity;
@@ -88,6 +89,7 @@ export type AuthorOptions = DeepPartial<Author>;
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
   o.__typename = "Author";
+  o.id = options.id ?? nextFactoryId("Author");
   o.name = options.name ?? "name";
   o.summary = maybeNewAuthorSummary(options.summary, cache);
   o.popularity = options.popularity ?? Popularity.Low;
@@ -228,3 +230,15 @@ type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+let nextFactoryIds: Record<string, number> = {};
+
+export function resetFactoryIds() {
+  nextFactoryIds = {};
+}
+
+function nextFactoryId(objectName: string): string {
+  const nextId = nextFactoryIds[objectName] || 1;
+  nextFactoryIds[objectName] = nextId + 1;
+  return String(nextId);
+}
