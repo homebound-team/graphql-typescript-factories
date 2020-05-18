@@ -20,6 +20,7 @@ export const plugin: PluginFunction = async (schema, documents) => {
   generateFactoryFunctions(schema, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
   addDeepPartial(chunks);
+  addNextIdMethods(chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
@@ -181,7 +182,7 @@ function getInitializer(
         return `"${field.name}"`;
       }
     } else if (type.name === "ID") {
-      return `"0"`;
+      return `nextFactoryId("${object.name}")`;
     }
     // TODO Handle other scalars like dates/etc
     return `"" as any`;
@@ -234,4 +235,21 @@ function addDeepPartial(chunks: Code[]): void {
       ? { [K in keyof T]?: DeepPartial<T[K]> }
       : Partial<T>;
   `);
+}
+
+function addNextIdMethods(chunks: Code[]) : void {
+  chunks.push(code`
+    let nextFactoryIds: Record<string, number> = {};
+
+    export function resetFactoryIds() {
+      nextFactoryIds = {};
+    }
+
+    function nextFactoryId(objectName: string): string {
+      const nextId = nextFactoryIds[objectName] || 1;
+      nextFactoryIds[objectName] = nextId + 1;
+      return String(nextId);
+    }
+  `);
+
 }

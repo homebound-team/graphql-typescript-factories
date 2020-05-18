@@ -1,5 +1,6 @@
 # An entity that will be a mapped typed
 type Author {
+  id: ID!
   name: String!
   summary: AuthorSummary!
   popularity: PopularityDetail!
