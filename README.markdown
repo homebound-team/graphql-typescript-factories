@@ -112,7 +112,7 @@ In order to develop changes for this package, follow these steps:
 
 3. Run `npm run build`, to create a build with your changes
 
-4. Run `npm run graphql-codegen`, and verify the out
+4. Run `npm run graphql-codegen`, and verify the output
 
 ## Todo
 
