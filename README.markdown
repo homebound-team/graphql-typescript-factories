@@ -1,3 +1,5 @@
+[![NPM](https://img.shields.io/npm/v/@homebound/graphql-typescript-factories)](https://www.npmjs.com/package/@homebound/graphql-typescript-factories)
+
 # graphq-typescript-factories
 
 This project is a plugin for [graphql-code-generator](http://www.graphql-code-generator.com) that generates `new<Foo>` factory methods for use in client-side GraphQL tests that are stubbing/mocking out GraphQL responses.
@@ -99,6 +101,18 @@ const employee = newEmployee({
 Will work even though `status` is technically a `EmployeeStatusDetail` object and not the `EmployeeStatus` enum directly.
 
 If this feature/pattern is problematic for users who don't use it, we can add a config flag to disable it.
+
+## Contributing
+
+In order to develop changes for this package, follow these steps:
+
+1. Make your desired changes in the [`src` directory](/src)
+
+2. Adjust the example files under the [`integration` directory](/integration) to use your new feature.
+
+3. Run `npm run build`, to create a build with your changes
+
+4. Run `npm run graphql-codegen`, and verify the out
 
 ## Todo
 
