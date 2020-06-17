@@ -12,14 +12,14 @@ workflows:
           filters:
             branches:
               ignore:
-                - master
+                - main
       - build:
           context: npm
           publish: true
           filters:
             branches:
               only:
-                - master
+                - main
 
 jobs:
   build:
