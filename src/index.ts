@@ -10,6 +10,7 @@ import {
   GraphQLOutputType,
   GraphQLScalarType,
   GraphQLSchema,
+  GraphQLType,
 } from "graphql";
 import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
 import PluginOutput = Types.PluginOutput;
@@ -92,6 +93,20 @@ function newFactory(type: GraphQLObjectType): Code {
     enumFields.length > 0 ? `Omit<${type.name}, ${enumFields.map(f => `"${f.name}"`).join(" | ")}>` : type.name;
   const maybeEnumOverrides = enumOverrides.length > 0 ? ["", ...enumOverrides].join(" & ") : "";
 
+  function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
+    // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
+    // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
+    if (fieldType.ofType instanceof GraphQLObjectType) {
+      const objectType = fieldType.ofType.name;
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull${objectType}(i, cache));`;
+    } else if (fieldType.ofType instanceof GraphQLNonNull && fieldType.ofType.ofType instanceof GraphQLObjectType) {
+      const objectType = fieldType.ofType.ofType.name;
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew${objectType}(i, cache));`;
+    } else {
+      return `o.${f.name} = options.${f.name} ?? [];`;
+    }
+  }
+
   return code`
     export type ${type.name}Options = DeepPartial<${basePartial}> ${maybeEnumOverrides};
 
@@ -105,20 +120,7 @@ function newFactory(type: GraphQLObjectType): Code {
             const enumType = getRealEnumForEnumDetailObject(fieldType);
             return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
           } else if (fieldType instanceof GraphQLList) {
-            // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
-            // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
-            if (fieldType.ofType instanceof GraphQLObjectType) {
-              const objectType = fieldType.ofType.name;
-              return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull${objectType}(i, cache));`;
-            } else if (
-              fieldType.ofType instanceof GraphQLNonNull &&
-              fieldType.ofType.ofType instanceof GraphQLObjectType
-            ) {
-              const objectType = fieldType.ofType.ofType.name;
-              return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew${objectType}(i, cache));`;
-            } else {
-              return `o.${f.name} = options.${f.name} ?? [];`;
-            }
+            return generateListField(f, fieldType);
           } else if (fieldType instanceof GraphQLObjectType) {
             return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
           } else {
@@ -126,6 +128,8 @@ function newFactory(type: GraphQLObjectType): Code {
           }
         } else if (f.type instanceof GraphQLObjectType) {
           return `o.${f.name} = maybeNewOrNull${f.type.name}(options.${f.name}, cache);`;
+        } else if (f.type instanceof GraphQLList) {
+          return generateListField(f, f.type);
         } else {
           return `o.${f.name} = options.${f.name} ?? null;`;
         }
@@ -237,7 +241,7 @@ function addDeepPartial(chunks: Code[]): void {
   `);
 }
 
-function addNextIdMethods(chunks: Code[]) : void {
+function addNextIdMethods(chunks: Code[]): void {
   chunks.push(code`
     let nextFactoryIds: Record<string, number> = {};
 
@@ -251,5 +255,4 @@ function addNextIdMethods(chunks: Code[]) : void {
       return String(nextId);
     }
   `);
-
 }

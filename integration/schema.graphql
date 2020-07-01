@@ -18,6 +18,12 @@ type AuthorSummary {
 
 type Book {
   name: String!
+  # Purposefully use [...]-no-bang as a boundary case
+  reviews: [BookReview]
+}
+
+type BookReview {
+  rating: Int!
 }
 
 union SearchResult = Author | Book

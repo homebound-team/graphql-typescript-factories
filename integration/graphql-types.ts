@@ -36,6 +36,13 @@ export type AuthorSummary = {
 export type Book = {
    __typename?: 'Book';
   name: Scalars['String'];
+  /** Purposefully use [...]-no-bang as a boundary case */
+  reviews?: Maybe<Array<Maybe<BookReview>>>;
+};
+
+export type BookReview = {
+   __typename?: 'BookReview';
+  rating: Scalars['Int'];
 };
 
 
@@ -206,6 +213,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   const o = (cache["Book"] = {} as Book);
   o.__typename = "Book";
   o.name = options.name ?? "name";
+  o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
   return o;
 }
 
@@ -226,6 +234,38 @@ function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record
     return value as Book;
   } else {
     return newBook(value, cache);
+  }
+}
+
+export type BookReviewOptions = DeepPartial<BookReview>;
+
+export function newBookReview(options: BookReviewOptions = {}, cache: Record<string, any> = {}): BookReview {
+  const o = (cache["BookReview"] = {} as BookReview);
+  o.__typename = "BookReview";
+  o.rating = options.rating ?? 0;
+  return o;
+}
+
+function maybeNewBookReview(value: BookReviewOptions | undefined, cache: Record<string, any>): BookReview {
+  if (value === undefined) {
+    return (cache["BookReview"] as BookReview) ?? newBookReview({}, cache);
+  } else if (value.__typename) {
+    return value as BookReview;
+  } else {
+    return newBookReview(value, cache);
+  }
+}
+
+function maybeNewOrNullBookReview(
+  value: BookReviewOptions | undefined | null,
+  cache: Record<string, any>,
+): BookReview | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as BookReview;
+  } else {
+    return newBookReview(value, cache);
   }
 }
 
