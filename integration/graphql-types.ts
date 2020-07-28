@@ -316,8 +316,13 @@ const enumDetailNameOfPopularity = {
 function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
-  } else if (Object.keys(enumOrDetail).includes("code")) {
-    return enumOrDetail as PopularityDetail;
+  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+    return {
+      __typename: "PopularityDetail",
+      code: enumOrDetail.code!,
+      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      ...enumOrDetail,
+    };
   } else {
     return newPopularityDetail({
       code: enumOrDetail as Popularity,
@@ -325,7 +330,6 @@ function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popu
     });
   }
 }
-
 type Builtin = Date | Function | Uint8Array | string | number | undefined;
 type DeepPartial<T> = T extends Builtin
   ? T

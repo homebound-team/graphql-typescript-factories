@@ -1,4 +1,4 @@
-import { newAuthor, resetFactoryIds } from "./graphql-types";
+import { newAuthor, Popularity, resetFactoryIds } from "./graphql-types";
 
 describe("typescript-factories", () => {
   it("does not infinite loop", () => {
@@ -26,5 +26,11 @@ describe("typescript-factories", () => {
     resetFactoryIds();
     const a3 = newAuthor({});
     expect(a3.id).toEqual("1");
+  });
+
+  it("fills in type name of enums", () => {
+    const a = newAuthor({ popularity: { code: Popularity.Low } });
+    expect(a.popularity.__typename).toEqual("PopularityDetail");
+    expect(a.popularity.name).toEqual("Low");
   });
 });

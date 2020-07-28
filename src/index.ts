@@ -48,30 +48,33 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 
   usedEnumDetailTypes.forEach(type => {
     const enumType = getRealEnumForEnumDetailObject(type);
+    const enumOrDetail = `Partial<${type.name}> | ${enumType.name} | undefined`;
     chunks.push(code`
-        const enumDetailNameOf${enumType.name} = {
-          ${enumType
-            .getValues()
-            .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
-            .join(", ")}
-        };
+      const enumDetailNameOf${enumType.name} = {
+        ${enumType
+          .getValues()
+          .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
+          .join(", ")}
+      };
 
-        // The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
-        function enumOrDetailOf${enumType.name}(enumOrDetail: Partial<${type.name}> | ${enumType.name} | undefined): ${
-      type.name
-    } {
-          if (enumOrDetail === undefined) {
-            return new${type.name}();
-          } else if (Object.keys(enumOrDetail).includes("code")) {
-            return enumOrDetail as ${type.name};
-          } else {
-            return new${type.name}({
-              code: enumOrDetail as ${enumType.name},
-              name: enumDetailNameOf${enumType.name}[enumOrDetail as ${enumType.name}],
-            });
+      // The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
+      function enumOrDetailOf${enumType.name}(enumOrDetail: ${enumOrDetail}): ${type.name} {
+        if (enumOrDetail === undefined) {
+          return new${type.name}();
+        } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+          return {
+            __typename: "${type.name}",
+            code: enumOrDetail.code!,
+            name: enumDetailNameOf${enumType.name}[enumOrDetail.code!],
+            ...enumOrDetail,
           }
+        } else {
+          return new${type.name}({
+            code: enumOrDetail as ${enumType.name},
+            name: enumDetailNameOf${enumType.name}[enumOrDetail as ${enumType.name}],
+          });
         }
-      `);
+      }`);
   });
 }
 
