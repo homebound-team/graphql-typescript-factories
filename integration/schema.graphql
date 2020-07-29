@@ -19,6 +19,8 @@ type AuthorSummary {
 type Book {
   name: String!
   popularity: PopularityDetail!
+  # Example of a nullable reference
+  coauthor: Author
   # Purposefully use [...]-no-bang as a boundary case
   reviews: [BookReview]
 }

@@ -1,4 +1,4 @@
-import { newAuthor, Popularity, resetFactoryIds } from "./graphql-types";
+import { newAuthor, newBook, Popularity, resetFactoryIds } from "./graphql-types";
 
 describe("typescript-factories", () => {
   it("does not infinite loop", () => {
@@ -37,5 +37,10 @@ describe("typescript-factories", () => {
   it("accepts codes for enum details when nested", () => {
     const a = newAuthor({ books: [{ popularity: Popularity.Low }] });
     expect(a.books[0].popularity.name).toEqual("Low");
+  });
+
+  it("can accept types as opt" + "ions with nullable references", () => {
+    const book = newBook();
+    const a = newAuthor({ books: [book] });
   });
 });

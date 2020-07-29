@@ -97,15 +97,19 @@ function newFactory(type: GraphQLObjectType): Code {
   const optionFields: Code[] = Object.values(type.getFields()).map(f => {
     const fieldType = maybeDenull(f.type);
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
-      return code`${f.name}?: ${fieldType.name}Options | ${getRealEnumForEnumDetailObject(fieldType).name};`;
+      const orNull = f.type instanceof GraphQLNonNull ? "" : " | null";
+      return code`${f.name}?: ${fieldType.name}Options | ${getRealEnumForEnumDetailObject(fieldType).name}${orNull};`;
     } else if (fieldType instanceof GraphQLObjectType) {
-      return code`${f.name}?: ${fieldType.name}Options;`;
+      const orNull = f.type instanceof GraphQLNonNull ? "" : " | null";
+      return code`${f.name}?: ${fieldType.name}Options${orNull};`;
     } else if (fieldType instanceof GraphQLList) {
+      const keyOrNull = f.type instanceof GraphQLNonNull ? "" : " | null";
+      const elementOrNull = fieldType.ofType instanceof GraphQLNonNull ? "" : " | null";
       const elementType = maybeDenull(fieldType.ofType);
       if (elementType instanceof GraphQLObjectType) {
-        return code`${f.name}?: ${elementType.name}Options[];`;
+        return code`${f.name}?: Array<${elementType.name}Options${elementOrNull}>${keyOrNull};`;
       } else {
-        return code`${f.name}?: ${type.name}["${f.name}"];`;
+        return code`${f.name}?: ${type.name}["${f.name}"]${keyOrNull};`;
       }
     } else {
       return code`${f.name}?: ${type.name}["${f.name}"];`;

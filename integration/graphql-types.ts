@@ -37,6 +37,8 @@ export type Book = {
    __typename?: 'Book';
   name: Scalars['String'];
   popularity: PopularityDetail;
+  /** Example of a nullable reference */
+  coauthor?: Maybe<Author>;
   /** Purposefully use [...]-no-bang as a boundary case */
   reviews?: Maybe<Array<Maybe<BookReview>>>;
 };
@@ -106,7 +108,7 @@ export interface AuthorOptions {
   popularity?: PopularityDetailOptions | Popularity;
   working?: Author["working"];
   birthday?: Author["birthday"];
-  books?: BookOptions[];
+  books?: Array<BookOptions>;
 }
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
@@ -228,7 +230,8 @@ export interface BookOptions {
   __typename?: "Book";
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity;
-  reviews?: BookReviewOptions[];
+  coauthor?: AuthorOptions | null;
+  reviews?: Array<BookReviewOptions | null> | null;
 }
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
@@ -236,6 +239,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.__typename = "Book";
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOfPopularity(options.popularity);
+  o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
   o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
   return o;
 }
