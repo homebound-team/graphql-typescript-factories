@@ -18,6 +18,7 @@ type AuthorSummary {
 
 type Book {
   name: String!
+  popularity: PopularityDetail!
   # Purposefully use [...]-no-bang as a boundary case
   reviews: [BookReview]
 }

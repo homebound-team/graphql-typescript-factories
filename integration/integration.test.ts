@@ -33,4 +33,9 @@ describe("typescript-factories", () => {
     expect(a.popularity.__typename).toEqual("PopularityDetail");
     expect(a.popularity.name).toEqual("Low");
   });
+
+  it("accepts codes for enum details when nested", () => {
+    const a = newAuthor({ books: [{ popularity: Popularity.Low }] });
+    expect(a.books[0].popularity.name).toEqual("Low");
+  });
 });

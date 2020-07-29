@@ -20,7 +20,6 @@ export const plugin: PluginFunction = async (schema, documents) => {
   const chunks: Code[] = [];
   generateFactoryFunctions(schema, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
-  addDeepPartial(chunks);
   addNextIdMethods(chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
@@ -48,7 +47,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 
   usedEnumDetailTypes.forEach(type => {
     const enumType = getRealEnumForEnumDetailObject(type);
-    const enumOrDetail = `Partial<${type.name}> | ${enumType.name} | undefined`;
+    const enumOrDetail = `${type.name}Options | ${enumType.name} | undefined`;
     chunks.push(code`
       const enumDetailNameOf${enumType.name} = {
         ${enumType
@@ -57,7 +56,6 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
           .join(", ")}
       };
 
-      // The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
       function enumOrDetailOf${enumType.name}(enumOrDetail: ${enumOrDetail}): ${type.name} {
         if (enumOrDetail === undefined) {
           return new${type.name}();
@@ -80,22 +78,6 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 
 /** Creates a `new${type}` function for the given `type`. */
 function newFactory(type: GraphQLObjectType): Code {
-  // We want to allow callers to pass in simple enums for our FooEnumDetails pattern,
-  // so find those fields and add type unions to the actually-the-enum type.
-  const enumFields = Object.values(type.getFields()).filter(field => isEnumDetailObject(unwrapNotNull(field.type)));
-
-  // For each enum field, we allow passing either the enum or enum detail to the factory
-  const enumOverrides = enumFields.map(field => {
-    const realEnumName = getRealEnumForEnumDetailObject(field.type).name;
-    const detailName = (unwrapNotNull(field.type) as GraphQLObjectType).name;
-    return `{ ${field.name}?: ${realEnumName} | Partial<${detailName}> }`;
-  });
-
-  // Take out the enum fields, and put back in their `enum | enum detail` type unions
-  const basePartial =
-    enumFields.length > 0 ? `Omit<${type.name}, ${enumFields.map(f => `"${f.name}"`).join(" | ")}>` : type.name;
-  const maybeEnumOverrides = enumOverrides.length > 0 ? ["", ...enumOverrides].join(" & ") : "";
-
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
@@ -110,8 +92,31 @@ function newFactory(type: GraphQLObjectType): Code {
     }
   }
 
+  // Instead of using `DeepPartial`, we make an explicit `AuthorOptions` for each type, primarily
+  // b/c the `AuthorOption.books: [BookOption]` will support enum details recursively.
+  const optionFields: Code[] = Object.values(type.getFields()).map(f => {
+    const fieldType = maybeDenull(f.type);
+    if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
+      return code`${f.name}?: ${fieldType.name}Options | ${getRealEnumForEnumDetailObject(fieldType).name};`;
+    } else if (fieldType instanceof GraphQLObjectType) {
+      return code`${f.name}?: ${fieldType.name}Options;`;
+    } else if (fieldType instanceof GraphQLList) {
+      const elementType = maybeDenull(fieldType.ofType);
+      if (elementType instanceof GraphQLObjectType) {
+        return code`${f.name}?: ${elementType.name}Options[];`;
+      } else {
+        return code`${f.name}?: ${type.name}["${f.name}"];`;
+      }
+    } else {
+      return code`${f.name}?: ${type.name}["${f.name}"];`;
+    }
+  });
+
   return code`
-    export type ${type.name}Options = DeepPartial<${basePartial}> ${maybeEnumOverrides};
+    export interface ${type.name}Options {
+      __typename?: '${type.name}';
+      ${optionFields.join("\n")}
+    }
 
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};
@@ -229,21 +234,6 @@ function shouldCreateFactory(type: GraphQLNamedType): type is GraphQLObjectType 
   );
 }
 
-function addDeepPartial(chunks: Code[]): void {
-  chunks.push(code`
-    type Builtin = Date | Function | Uint8Array | string | number | undefined;
-    type DeepPartial<T> = T extends Builtin
-      ? T
-      : T extends Array<infer U>
-      ? Array<DeepPartial<U>>
-      : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-      ? { [K in keyof T]?: DeepPartial<T[K]> }
-      : Partial<T>;
-  `);
-}
-
 function addNextIdMethods(chunks: Code[]): void {
   chunks.push(code`
     let nextFactoryIds: Record<string, number> = {};
@@ -258,4 +248,8 @@ function addNextIdMethods(chunks: Code[]): void {
       return String(nextId);
     }
   `);
+}
+
+function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
+  return o instanceof GraphQLNonNull ? o.ofType : o;
 }

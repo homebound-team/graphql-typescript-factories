@@ -36,6 +36,7 @@ export type AuthorSummary = {
 export type Book = {
    __typename?: 'Book';
   name: Scalars['String'];
+  popularity: PopularityDetail;
   /** Purposefully use [...]-no-bang as a boundary case */
   reviews?: Maybe<Array<Maybe<BookReview>>>;
 };
@@ -97,9 +98,16 @@ export enum Working {
 }
 
 
-export type AuthorOptions = DeepPartial<Omit<Author, "popularity">> & {
-  popularity?: Popularity | Partial<PopularityDetail>;
-};
+export interface AuthorOptions {
+  __typename?: "Author";
+  id?: Author["id"];
+  name?: Author["name"];
+  summary?: AuthorSummaryOptions;
+  popularity?: PopularityDetailOptions | Popularity;
+  working?: Author["working"];
+  birthday?: Author["birthday"];
+  books?: BookOptions[];
+}
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
@@ -134,7 +142,12 @@ function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Re
   }
 }
 
-export type AuthorSummaryOptions = DeepPartial<AuthorSummary>;
+export interface AuthorSummaryOptions {
+  __typename?: "AuthorSummary";
+  author?: AuthorOptions;
+  numberOfBooks?: AuthorSummary["numberOfBooks"];
+  amountOfSales?: AuthorSummary["amountOfSales"];
+}
 
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (cache["AuthorSummary"] = {} as AuthorSummary);
@@ -168,7 +181,11 @@ function maybeNewOrNullAuthorSummary(
   }
 }
 
-export type PopularityDetailOptions = DeepPartial<PopularityDetail>;
+export interface PopularityDetailOptions {
+  __typename?: "PopularityDetail";
+  code?: PopularityDetail["code"];
+  name?: PopularityDetail["name"];
+}
 
 export function newPopularityDetail(
   options: PopularityDetailOptions = {},
@@ -207,12 +224,18 @@ function maybeNewOrNullPopularityDetail(
   }
 }
 
-export type BookOptions = DeepPartial<Book>;
+export interface BookOptions {
+  __typename?: "Book";
+  name?: Book["name"];
+  popularity?: PopularityDetailOptions | Popularity;
+  reviews?: BookReviewOptions[];
+}
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (cache["Book"] = {} as Book);
   o.__typename = "Book";
   o.name = options.name ?? "name";
+  o.popularity = enumOrDetailOfPopularity(options.popularity);
   o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
   return o;
 }
@@ -237,7 +260,10 @@ function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record
   }
 }
 
-export type BookReviewOptions = DeepPartial<BookReview>;
+export interface BookReviewOptions {
+  __typename?: "BookReview";
+  rating?: BookReview["rating"];
+}
 
 export function newBookReview(options: BookReviewOptions = {}, cache: Record<string, any> = {}): BookReview {
   const o = (cache["BookReview"] = {} as BookReview);
@@ -269,7 +295,10 @@ function maybeNewOrNullBookReview(
   }
 }
 
-export type SaveAuthorResultOptions = DeepPartial<SaveAuthorResult>;
+export interface SaveAuthorResultOptions {
+  __typename?: "SaveAuthorResult";
+  author?: AuthorOptions;
+}
 
 export function newSaveAuthorResult(
   options: SaveAuthorResultOptions = {},
@@ -312,8 +341,7 @@ const enumDetailNameOfPopularity = {
   High: "High",
 };
 
-// The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
-function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popularity | undefined): PopularityDetail {
+function enumOrDetailOfPopularity(enumOrDetail: PopularityDetailOptions | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
@@ -330,17 +358,6 @@ function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popu
     });
   }
 }
-type Builtin = Date | Function | Uint8Array | string | number | undefined;
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
-
 let nextFactoryIds: Record<string, number> = {};
 
 export function resetFactoryIds() {
