@@ -28,7 +28,7 @@ export const plugin: PluginFunction = async (schema, documents) => {
 function generateFactoryFunctions(schema: GraphQLSchema, chunks: Code[]) {
   Object.values(schema.getTypeMap()).forEach(type => {
     if (shouldCreateFactory(type)) {
-      chunks.push(newFactory(type));
+      chunks.push(...newFactory(type));
     }
   });
 }
@@ -72,12 +72,32 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
             name: enumDetailNameOf${enumType.name}[enumOrDetail as ${enumType.name}],
           });
         }
+      }
+
+      function enumOrDetailOrNullOf${enumType.name}(enumOrDetail: ${enumOrDetail} | null): ${type.name} | null {
+        if (enumOrDetail === undefined) {
+          return new${type.name}();
+        } else if (enumOrDetail === null) {
+          return null;
+        } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+          return {
+            __typename: "${type.name}",
+            code: enumOrDetail.code!,
+            name: enumDetailNameOf${enumType.name}[enumOrDetail.code!],
+            ...enumOrDetail,
+          }
+        } else {
+          return new${type.name}({
+            code: enumOrDetail as ${enumType.name},
+            name: enumDetailNameOf${enumType.name}[enumOrDetail as ${enumType.name}],
+          });
+        }
       }`);
   });
 }
 
 /** Creates a `new${type}` function for the given `type`. */
-function newFactory(type: GraphQLObjectType): Code {
+function newFactory(type: GraphQLObjectType): Code[] {
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
@@ -116,7 +136,7 @@ function newFactory(type: GraphQLObjectType): Code {
     }
   });
 
-  return code`
+  const factory = code`
     export interface ${type.name}Options {
       __typename?: '${type.name}';
       ${optionFields.join("\n")}
@@ -139,7 +159,11 @@ function newFactory(type: GraphQLObjectType): Code {
             return `o.${f.name} = options.${f.name} ?? ${getInitializer(type, f, fieldType)};`;
           }
         } else if (f.type instanceof GraphQLObjectType) {
-          return `o.${f.name} = maybeNewOrNull${f.type.name}(options.${f.name}, cache);`;
+          if (isEnumDetailObject(f.type)) {
+            const enumType = getRealEnumForEnumDetailObject(f.type);
+            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
+          }
+          return `o.${f.name} = maybeNewOrNull${(f.type as any).name}(options.${f.name}, cache);`;
         } else if (f.type instanceof GraphQLList) {
           return generateListField(f, f.type);
         } else {
@@ -147,8 +171,10 @@ function newFactory(type: GraphQLObjectType): Code {
         }
       })}
       return o;
-    }
-    
+    }`;
+
+  const maybeFunctions = code`
+
     function maybeNew${type.name}(value: ${type.name}Options | undefined, cache: Record<string, any>): ${type.name} {
       if (value === undefined) {
         return cache["${type.name}"] as ${type.name} ?? new${type.name}({}, cache)
@@ -159,9 +185,7 @@ function newFactory(type: GraphQLObjectType): Code {
       }
     }
     
-    function maybeNewOrNull${type.name}(value: ${type.name}Options | undefined | null, cache: Record<string, any>): ${
-    type.name
-  } | null {
+    function maybeNewOrNull${type.name}(value: ${type.name}Options | undefined | null, cache: Record<string, any>): ${type.name} | null {
       if (!value) {
         return null;
       } else if (value.__typename) {
@@ -169,8 +193,9 @@ function newFactory(type: GraphQLObjectType): Code {
       } else {
         return new${type.name}(value, cache);
       }
-    }
-    `;
+    }`;
+
+  return [factory, ...(isEnumDetailObject(type) ? [] : [maybeFunctions])];
 }
 
 /** Returns a default value for the given field's type, i.e. strings are "", ints are 0, arrays are []. */

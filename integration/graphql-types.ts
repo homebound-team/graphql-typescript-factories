@@ -36,7 +36,8 @@ export type AuthorSummary = {
 export type Book = {
    __typename?: 'Book';
   name: Scalars['String'];
-  popularity: PopularityDetail;
+  /** Example of a nullable enum */
+  popularity?: Maybe<PopularityDetail>;
   /** Example of a nullable reference */
   coauthor?: Maybe<Author>;
   /** Purposefully use [...]-no-bang as a boundary case */
@@ -143,7 +144,6 @@ function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Re
     return newAuthor(value, cache);
   }
 }
-
 export interface AuthorSummaryOptions {
   __typename?: "AuthorSummary";
   author?: AuthorOptions;
@@ -182,7 +182,6 @@ function maybeNewOrNullAuthorSummary(
     return newAuthorSummary(value, cache);
   }
 }
-
 export interface PopularityDetailOptions {
   __typename?: "PopularityDetail";
   code?: PopularityDetail["code"];
@@ -199,37 +198,10 @@ export function newPopularityDetail(
   o.name = options.name ?? "Low";
   return o;
 }
-
-function maybeNewPopularityDetail(
-  value: PopularityDetailOptions | undefined,
-  cache: Record<string, any>,
-): PopularityDetail {
-  if (value === undefined) {
-    return (cache["PopularityDetail"] as PopularityDetail) ?? newPopularityDetail({}, cache);
-  } else if (value.__typename) {
-    return value as PopularityDetail;
-  } else {
-    return newPopularityDetail(value, cache);
-  }
-}
-
-function maybeNewOrNullPopularityDetail(
-  value: PopularityDetailOptions | undefined | null,
-  cache: Record<string, any>,
-): PopularityDetail | null {
-  if (!value) {
-    return null;
-  } else if (value.__typename) {
-    return value as PopularityDetail;
-  } else {
-    return newPopularityDetail(value, cache);
-  }
-}
-
 export interface BookOptions {
   __typename?: "Book";
   name?: Book["name"];
-  popularity?: PopularityDetailOptions | Popularity;
+  popularity?: PopularityDetailOptions | Popularity | null;
   coauthor?: AuthorOptions | null;
   reviews?: Array<BookReviewOptions | null> | null;
 }
@@ -238,7 +210,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   const o = (cache["Book"] = {} as Book);
   o.__typename = "Book";
   o.name = options.name ?? "name";
-  o.popularity = enumOrDetailOfPopularity(options.popularity);
+  o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
   o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
   return o;
@@ -263,7 +235,6 @@ function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record
     return newBook(value, cache);
   }
 }
-
 export interface BookReviewOptions {
   __typename?: "BookReview";
   rating?: BookReview["rating"];
@@ -298,7 +269,6 @@ function maybeNewOrNullBookReview(
     return newBookReview(value, cache);
   }
 }
-
 export interface SaveAuthorResultOptions {
   __typename?: "SaveAuthorResult";
   author?: AuthorOptions;
@@ -339,7 +309,6 @@ function maybeNewOrNullSaveAuthorResult(
     return newSaveAuthorResult(value, cache);
   }
 }
-
 const enumDetailNameOfPopularity = {
   Low: "Low",
   High: "High",
@@ -348,6 +317,28 @@ const enumDetailNameOfPopularity = {
 function enumOrDetailOfPopularity(enumOrDetail: PopularityDetailOptions | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
+  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+    return {
+      __typename: "PopularityDetail",
+      code: enumOrDetail.code!,
+      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      ...enumOrDetail,
+    };
+  } else {
+    return newPopularityDetail({
+      code: enumOrDetail as Popularity,
+      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    });
+  }
+}
+
+function enumOrDetailOrNullOfPopularity(
+  enumOrDetail: PopularityDetailOptions | Popularity | undefined | null,
+): PopularityDetail | null {
+  if (enumOrDetail === undefined) {
+    return newPopularityDetail();
+  } else if (enumOrDetail === null) {
+    return null;
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
     return {
       __typename: "PopularityDetail",
