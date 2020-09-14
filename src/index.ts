@@ -1,5 +1,5 @@
 import { pascalCase, sentenceCase } from "change-case";
-import { Code, code } from "ts-poet";
+import { Code, code, imp } from "ts-poet";
 import {
   GraphQLEnumType,
   GraphQLField,
@@ -13,22 +13,23 @@ import {
   GraphQLType,
 } from "graphql";
 import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
+import { SymbolSpec } from "ts-poet/build/SymbolSpecs";
 import PluginOutput = Types.PluginOutput;
 
 /** Generates `newProject({ ... })` factory functions in our `graphql-types` codegen output. */
-export const plugin: PluginFunction = async (schema, documents) => {
+export const plugin: PluginFunction = async (schema, documents, config: Config) => {
   const chunks: Code[] = [];
-  generateFactoryFunctions(schema, chunks);
+  generateFactoryFunctions(config, schema, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
   addNextIdMethods(chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
 
-function generateFactoryFunctions(schema: GraphQLSchema, chunks: Code[]) {
+function generateFactoryFunctions(config: Config, schema: GraphQLSchema, chunks: Code[]) {
   Object.values(schema.getTypeMap()).forEach(type => {
     if (shouldCreateFactory(type)) {
-      chunks.push(...newFactory(type));
+      chunks.push(...newFactory(config, type));
     }
   });
 }
@@ -97,7 +98,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 }
 
 /** Creates a `new${type}` function for the given `type`. */
-function newFactory(type: GraphQLObjectType): Code[] {
+function newFactory(config: Config, type: GraphQLObjectType): Code[] {
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
@@ -156,7 +157,7 @@ function newFactory(type: GraphQLObjectType): Code[] {
           } else if (fieldType instanceof GraphQLObjectType) {
             return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
           } else {
-            return `o.${f.name} = options.${f.name} ?? ${getInitializer(type, f, fieldType)};`;
+            return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
           }
         } else if (f.type instanceof GraphQLObjectType) {
           if (isEnumDetailObject(f.type)) {
@@ -200,10 +201,11 @@ function newFactory(type: GraphQLObjectType): Code[] {
 
 /** Returns a default value for the given field's type, i.e. strings are "", ints are 0, arrays are []. */
 function getInitializer(
+  config: Config,
   object: GraphQLObjectType,
   field: GraphQLField<any, any, any>,
   type: GraphQLOutputType,
-): string {
+): string | Code {
   if (type instanceof GraphQLList) {
     // We could potentially make a dummy entry in every list, but would we risk infinite loops between parents/children?
     return `[]`;
@@ -225,7 +227,10 @@ function getInitializer(
     } else if (type.name === "ID") {
       return `nextFactoryId("${object.name}")`;
     }
-    // TODO Handle other scalars like dates/etc
+    const defaultFromConfig = config.scalarDefaults[type.name];
+    if (defaultFromConfig) {
+      return code`${toImp(defaultFromConfig)}()`;
+    }
     return `"" as any`;
   }
   return `undefined as any`;
@@ -281,4 +286,15 @@ function addNextIdMethods(chunks: Code[]): void {
 
 function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
   return o instanceof GraphQLNonNull ? o.ofType : o;
+}
+
+/** The config values we read from the graphql-codegen.yml file. */
+export type Config = {
+  scalarDefaults: Record<string, string>;
+};
+
+// Maps the graphql-code-generation convention of `@src/context#Context` to ts-poet's `Context@@src/context`.
+export function toImp(spec: string): SymbolSpec {
+  const [path, symbol] = spec.split("#");
+  return imp(`${symbol}@${path}`);
 }

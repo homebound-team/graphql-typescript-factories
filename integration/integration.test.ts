@@ -1,4 +1,5 @@
-import { newAuthor, newBook, Popularity, resetFactoryIds } from "./graphql-types";
+import { jan1 } from "./testData";
+import { newAuthor, newBook, newCalendarInterval, Popularity, resetFactoryIds } from "./graphql-types";
 
 describe("typescript-factories", () => {
   it("does not infinite loop", () => {
@@ -39,8 +40,14 @@ describe("typescript-factories", () => {
     expect(a.books[0].popularity?.name).toEqual("Low");
   });
 
-  it("can accept types as opt" + "ions with nullable references", () => {
+  it("can accept types as options with nullable references", () => {
     const book = newBook();
     const a = newAuthor({ books: [book] });
+  });
+
+  it("can have defaults for custom scalars", () => {
+    const a = newCalendarInterval();
+    expect(a.start).toEqual(jan1);
+    expect(a.end).toEqual(jan1);
   });
 });

@@ -15,7 +15,7 @@
     "@graphql-codegen/plugin-helpers": "^1.13.1",
     "change-case": "^4.1.1",
     "graphql": "^14.6.0",
-    "ts-poet": "^3.0.0"
+    "ts-poet": "^3.2.2"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",

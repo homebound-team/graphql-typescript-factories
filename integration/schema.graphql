@@ -55,6 +55,11 @@ input AuthorInput {
   name: String
 }
 
+type CalendarInterval {
+  start: Date!
+  end: Date!
+}
+
 enum Popularity {
   Low
   High

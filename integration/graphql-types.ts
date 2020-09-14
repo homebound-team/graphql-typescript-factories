@@ -49,6 +49,12 @@ export type BookReview = {
   rating: Scalars['Int'];
 };
 
+export type CalendarInterval = {
+   __typename?: 'CalendarInterval';
+  start: Scalars['Date'];
+  end: Scalars['Date'];
+};
+
 
 export type Mutation = {
    __typename?: 'Mutation';
@@ -101,6 +107,8 @@ export enum Working {
 }
 
 
+import { newDate } from "./testData";
+
 export interface AuthorOptions {
   __typename?: "Author";
   id?: Author["id"];
@@ -121,7 +129,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.popularity = enumOrDetailOfPopularity(options.popularity);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
-  o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
+  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache));
   return o;
 }
 
@@ -212,7 +220,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
-  o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
+  o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
   return o;
 }
 
@@ -307,6 +315,48 @@ function maybeNewOrNullSaveAuthorResult(
     return value as SaveAuthorResult;
   } else {
     return newSaveAuthorResult(value, cache);
+  }
+}
+export interface CalendarIntervalOptions {
+  __typename?: "CalendarInterval";
+  start?: CalendarInterval["start"];
+  end?: CalendarInterval["end"];
+}
+
+export function newCalendarInterval(
+  options: CalendarIntervalOptions = {},
+  cache: Record<string, any> = {},
+): CalendarInterval {
+  const o = (cache["CalendarInterval"] = {} as CalendarInterval);
+  o.__typename = "CalendarInterval";
+  o.start = options.start ?? newDate();
+  o.end = options.end ?? newDate();
+  return o;
+}
+
+function maybeNewCalendarInterval(
+  value: CalendarIntervalOptions | undefined,
+  cache: Record<string, any>,
+): CalendarInterval {
+  if (value === undefined) {
+    return (cache["CalendarInterval"] as CalendarInterval) ?? newCalendarInterval({}, cache);
+  } else if (value.__typename) {
+    return value as CalendarInterval;
+  } else {
+    return newCalendarInterval(value, cache);
+  }
+}
+
+function maybeNewOrNullCalendarInterval(
+  value: CalendarIntervalOptions | undefined | null,
+  cache: Record<string, any>,
+): CalendarInterval | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as CalendarInterval;
+  } else {
+    return newCalendarInterval(value, cache);
   }
 }
 const enumDetailNameOfPopularity = {

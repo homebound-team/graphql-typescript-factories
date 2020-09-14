@@ -2,6 +2,9 @@ overwrite: true
 schema: "./integration/schema.graphql"
 generates:
   integration/graphql-types.ts:
+    config:
+      scalarDefaults:
+        Date: "./testData#newDate"
     plugins:
       - typescript
       - typescript-operations
