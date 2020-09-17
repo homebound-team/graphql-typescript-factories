@@ -12,15 +12,15 @@
     "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml"
   },
   "dependencies": {
-    "@graphql-codegen/plugin-helpers": "^1.13.1",
+    "@graphql-codegen/plugin-helpers": "^1.17.8",
     "change-case": "^4.1.1",
-    "graphql": "^14.6.0",
+    "graphql": "^15.3.0",
     "ts-poet": "^3.2.2"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
-    "@graphql-codegen/cli": "^1.13.1",
-    "@graphql-codegen/typescript-operations": "^1.13.1",
+    "@graphql-codegen/cli": "^1.17.8",
+    "@graphql-codegen/typescript-operations": "^1.17.8",
     "eslint-config-prettier": "^6.5.0",
     "eslint-plugin-prettier": "^3.1.1",
     "husky": "^3.0.9",
