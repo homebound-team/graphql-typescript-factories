@@ -3,6 +3,7 @@ import { Code, code, imp } from "ts-poet";
 import {
   GraphQLEnumType,
   GraphQLField,
+  GraphQLInterfaceType,
   GraphQLList,
   GraphQLNamedType,
   GraphQLNonNull,
@@ -19,17 +20,35 @@ import PluginOutput = Types.PluginOutput;
 /** Generates `newProject({ ... })` factory functions in our `graphql-types` codegen output. */
 export const plugin: PluginFunction = async (schema, documents, config: Config) => {
   const chunks: Code[] = [];
-  generateFactoryFunctions(config, schema, chunks);
+
+  // Establish defaults for interfaces, i.e. Named --> assume its Author
+  const interfaceDefaults: Record<string, string> = {};
+  Object.values(schema.getTypeMap()).forEach(type => {
+    if (type instanceof GraphQLObjectType) {
+      for (const i of type.getInterfaces()) {
+        if (interfaceDefaults[i.name] === undefined) {
+          interfaceDefaults[i.name] = type.name;
+        }
+      }
+    }
+  });
+
+  generateFactoryFunctions(config, schema, interfaceDefaults, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
   addNextIdMethods(chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
 
-function generateFactoryFunctions(config: Config, schema: GraphQLSchema, chunks: Code[]) {
+function generateFactoryFunctions(
+  config: Config,
+  schema: GraphQLSchema,
+  interfaceDefaults: Record<string, string>,
+  chunks: Code[],
+) {
   Object.values(schema.getTypeMap()).forEach(type => {
     if (shouldCreateFactory(type)) {
-      chunks.push(...newFactory(config, type));
+      chunks.push(...newFactory(config, interfaceDefaults, type));
     }
   });
 }
@@ -98,7 +117,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 }
 
 /** Creates a `new${type}` function for the given `type`. */
-function newFactory(config: Config, type: GraphQLObjectType): Code[] {
+function newFactory(config: Config, interfaceDefaults: Record<string, string>, type: GraphQLObjectType): Code[] {
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
@@ -156,6 +175,9 @@ function newFactory(config: Config, type: GraphQLObjectType): Code[] {
             return generateListField(f, fieldType);
           } else if (fieldType instanceof GraphQLObjectType) {
             return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
+          } else if (fieldType instanceof GraphQLInterfaceType) {
+            const implTypeName = interfaceDefaults[fieldType.name] || fail();
+            return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache);`;
           } else {
             return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
           }
@@ -297,4 +319,8 @@ export type Config = {
 export function toImp(spec: string): SymbolSpec {
   const [path, symbol] = spec.split("#");
   return imp(`${symbol}@${path}`);
+}
+
+export function fail(message?: string): never {
+  throw new Error(message || "Failed");
 }

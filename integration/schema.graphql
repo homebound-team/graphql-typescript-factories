@@ -1,5 +1,5 @@
 # An entity that will be a mapped typed
-type Author {
+type Author implements Named {
   id: ID!
   name: String!
   summary: AuthorSummary!
@@ -16,7 +16,7 @@ type AuthorSummary {
   amountOfSales: Float
 }
 
-type Book {
+type Book implements Named {
   name: String!
   # Example of a nullable enum
   popularity: PopularityDetail
@@ -65,7 +65,7 @@ enum Popularity {
   High
 }
 
-type PopularityDetail {
+type PopularityDetail implements Named {
   code: Popularity!
   name: String!
 }
@@ -76,3 +76,12 @@ enum Working {
 }
 
 scalar Date
+
+interface Named {
+  name: String!
+}
+
+type Child {
+  # For testing newChild() picks newAuthor
+  parent: Named!
+}

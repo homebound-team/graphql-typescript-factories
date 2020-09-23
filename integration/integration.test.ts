@@ -1,5 +1,5 @@
 import { jan1 } from "./testData";
-import { newAuthor, newBook, newCalendarInterval, Popularity, resetFactoryIds } from "./graphql-types";
+import { newAuthor, newBook, newCalendarInterval, newChild, Popularity, resetFactoryIds } from "./graphql-types";
 
 describe("typescript-factories", () => {
   it("does not infinite loop", () => {
@@ -49,5 +49,10 @@ describe("typescript-factories", () => {
     const a = newCalendarInterval();
     expect(a.start).toEqual(jan1);
     expect(a.end).toEqual(jan1);
+  });
+
+  it("picks the 1st impl of an interface", () => {
+    const c = newChild();
+    expect((c.parent as any).__typename).toEqual("Author");
   });
 });

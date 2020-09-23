@@ -10,7 +10,7 @@ export type Scalars = {
 };
 
 /** An entity that will be a mapped typed */
-export type Author = {
+export type Author = Named & {
    __typename?: 'Author';
   id: Scalars['ID'];
   name: Scalars['String'];
@@ -33,7 +33,7 @@ export type AuthorSummary = {
   amountOfSales?: Maybe<Scalars['Float']>;
 };
 
-export type Book = {
+export type Book = Named & {
    __typename?: 'Book';
   name: Scalars['String'];
   /** Example of a nullable enum */
@@ -55,6 +55,12 @@ export type CalendarInterval = {
   end: Scalars['Date'];
 };
 
+export type Child = {
+   __typename?: 'Child';
+  /** For testing newChild() picks newAuthor */
+  parent: Named;
+};
+
 
 export type Mutation = {
    __typename?: 'Mutation';
@@ -66,12 +72,16 @@ export type MutationSaveAuthorArgs = {
   input: AuthorInput;
 };
 
+export type Named = {
+  name: Scalars['String'];
+};
+
 export enum Popularity {
   Low = 'Low',
   High = 'High'
 }
 
-export type PopularityDetail = {
+export type PopularityDetail = Named & {
    __typename?: 'PopularityDetail';
   code: Popularity;
   name: Scalars['String'];
@@ -357,6 +367,37 @@ function maybeNewOrNullCalendarInterval(
     return value as CalendarInterval;
   } else {
     return newCalendarInterval(value, cache);
+  }
+}
+export interface ChildOptions {
+  __typename?: "Child";
+  parent?: Child["parent"];
+}
+
+export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
+  const o = (cache["Child"] = {} as Child);
+  o.__typename = "Child";
+  o.parent = maybeNewAuthor(options.parent, cache);
+  return o;
+}
+
+function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, any>): Child {
+  if (value === undefined) {
+    return (cache["Child"] as Child) ?? newChild({}, cache);
+  } else if (value.__typename) {
+    return value as Child;
+  } else {
+    return newChild(value, cache);
+  }
+}
+
+function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Record<string, any>): Child | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as Child;
+  } else {
+    return newChild(value, cache);
   }
 }
 const enumDetailNameOfPopularity = {
