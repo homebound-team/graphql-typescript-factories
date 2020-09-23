@@ -202,10 +202,7 @@ function newFactory(config: Config, interfaceDefaults: Record<string, string>, t
 
     function maybeNew${type.name}(value: ${type.name}Options | undefined, cache: Record<string, any>): ${type.name} {
       if (value === undefined) {
-        const existing = cache["${type.name}"];
-        // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-        // In theory the apollo-cache will not care we're returning a partial object.
-        return existing ? ${!hasIdField ? "existing" : `{ __typename: "${type.name}", id: existing.id } as ${type.name}`}: new${type.name}({}, cache)
+        return cache["${type.name}"] || new${type.name}({}, cache)
       } else if (value.__typename) {
         return value as ${type.name};
       } else {

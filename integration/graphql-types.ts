@@ -145,10 +145,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
 
 function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, any>): Author {
   if (value === undefined) {
-    const existing = cache["Author"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? ({ __typename: "Author", id: existing.id } as Author) : newAuthor({}, cache);
+    return cache["Author"] || newAuthor({}, cache);
   } else if (value.__typename) {
     return value as Author;
   } else {
@@ -183,10 +180,7 @@ export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Reco
 
 function maybeNewAuthorSummary(value: AuthorSummaryOptions | undefined, cache: Record<string, any>): AuthorSummary {
   if (value === undefined) {
-    const existing = cache["AuthorSummary"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newAuthorSummary({}, cache);
+    return cache["AuthorSummary"] || newAuthorSummary({}, cache);
   } else if (value.__typename) {
     return value as AuthorSummary;
   } else {
@@ -242,10 +236,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
 
 function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>): Book {
   if (value === undefined) {
-    const existing = cache["Book"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newBook({}, cache);
+    return cache["Book"] || newBook({}, cache);
   } else if (value.__typename) {
     return value as Book;
   } else {
@@ -276,10 +267,7 @@ export function newBookReview(options: BookReviewOptions = {}, cache: Record<str
 
 function maybeNewBookReview(value: BookReviewOptions | undefined, cache: Record<string, any>): BookReview {
   if (value === undefined) {
-    const existing = cache["BookReview"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newBookReview({}, cache);
+    return cache["BookReview"] || newBookReview({}, cache);
   } else if (value.__typename) {
     return value as BookReview;
   } else {
@@ -319,10 +307,7 @@ function maybeNewSaveAuthorResult(
   cache: Record<string, any>,
 ): SaveAuthorResult {
   if (value === undefined) {
-    const existing = cache["SaveAuthorResult"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newSaveAuthorResult({}, cache);
+    return cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
   } else if (value.__typename) {
     return value as SaveAuthorResult;
   } else {
@@ -364,10 +349,7 @@ function maybeNewCalendarInterval(
   cache: Record<string, any>,
 ): CalendarInterval {
   if (value === undefined) {
-    const existing = cache["CalendarInterval"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newCalendarInterval({}, cache);
+    return cache["CalendarInterval"] || newCalendarInterval({}, cache);
   } else if (value.__typename) {
     return value as CalendarInterval;
   } else {
@@ -401,10 +383,7 @@ export function newChild(options: ChildOptions = {}, cache: Record<string, any> 
 
 function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, any>): Child {
   if (value === undefined) {
-    const existing = cache["Child"];
-    // Avoid both infinite loops (just calling new again) and also circular structures (returning existing as-is).
-    // In theory the apollo-cache will not care we're returning a partial object.
-    return existing ? existing : newChild({}, cache);
+    return cache["Child"] || newChild({}, cache);
   } else if (value.__typename) {
     return value as Child;
   } else {
