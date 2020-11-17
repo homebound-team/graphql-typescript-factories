@@ -4,7 +4,7 @@ type Author implements Named {
   name: String!
   summary: AuthorSummary!
   popularity: PopularityDetail!
-  popularityV2: PopularityWithExtraFieldDetail!
+  workingDetail: WorkingDetail!
   working: Working
   birthday: Date
   books: [Book!]!
@@ -72,8 +72,8 @@ type PopularityDetail implements Named {
 }
 
 # An example of an enum type with an extra field
-type PopularityWithExtraFieldDetail {
-  code: Popularity!
+type WorkingDetail {
+  code: Working!
   name: String!
   extraField: Int!
 }

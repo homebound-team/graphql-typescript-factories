@@ -15,7 +15,7 @@ export type Author = Named & {
   name: Scalars['String'];
   summary: AuthorSummary;
   popularity: PopularityDetail;
-  popularityV2: PopularityWithExtraFieldDetail;
+  workingDetail: WorkingDetail;
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
@@ -82,13 +82,6 @@ export type PopularityDetail = Named & {
   name: Scalars['String'];
 };
 
-export type PopularityWithExtraFieldDetail = {
-   __typename?: 'PopularityWithExtraFieldDetail';
-  code: Popularity;
-  name: Scalars['String'];
-  extraField: Scalars['Int'];
-};
-
 export type Query = {
    __typename?: 'Query';
   authors: Array<Author>;
@@ -118,6 +111,13 @@ export enum Working {
   No = 'NO'
 }
 
+export type WorkingDetail = {
+   __typename?: 'WorkingDetail';
+  code: Working;
+  name: Scalars['String'];
+  extraField: Scalars['Int'];
+};
+
 
 import { newDate } from "./testData";
 
@@ -127,7 +127,7 @@ export interface AuthorOptions {
   name?: Author["name"];
   summary?: AuthorSummaryOptions;
   popularity?: PopularityDetailOptions | Popularity;
-  popularityV2?: PopularityWithExtraFieldDetailOptions | Popularity;
+  workingDetail?: WorkingDetailOptions | Working;
   working?: Author["working"];
   birthday?: Author["birthday"];
   books?: Array<BookOptions>;
@@ -140,7 +140,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.name = options.name ?? "name";
   o.summary = maybeNewAuthorSummary(options.summary, cache);
   o.popularity = enumOrDetailOfPopularity(options.popularity);
-  o.popularityV2 = enumOrDetailOfPopularity(options.popularityV2);
+  o.workingDetail = enumOrDetailOfWorking(options.workingDetail);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
   o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
@@ -220,21 +220,18 @@ export function newPopularityDetail(
   o.name = options.name ?? "Low";
   return o;
 }
-export interface PopularityWithExtraFieldDetailOptions {
-  __typename?: "PopularityWithExtraFieldDetail";
-  code?: PopularityWithExtraFieldDetail["code"];
-  name?: PopularityWithExtraFieldDetail["name"];
-  extraField?: PopularityWithExtraFieldDetail["extraField"];
+export interface WorkingDetailOptions {
+  __typename?: "WorkingDetail";
+  code?: WorkingDetail["code"];
+  name?: WorkingDetail["name"];
+  extraField?: WorkingDetail["extraField"];
 }
 
-export function newPopularityWithExtraFieldDetail(
-  options: PopularityWithExtraFieldDetailOptions = {},
-  cache: Record<string, any> = {},
-): PopularityWithExtraFieldDetail {
-  const o = (cache["PopularityWithExtraFieldDetail"] = {} as PopularityWithExtraFieldDetail);
-  o.__typename = "PopularityWithExtraFieldDetail";
-  o.code = options.code ?? Popularity.Low;
-  o.name = options.name ?? "Low";
+export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
+  const o = (cache["WorkingDetail"] = {} as WorkingDetail);
+  o.__typename = "WorkingDetail";
+  o.code = options.code ?? Working.Yes;
+  o.name = options.name ?? "Yes";
   o.extraField = options.extraField ?? 0;
   return o;
 }
@@ -466,49 +463,47 @@ function enumOrDetailOrNullOfPopularity(
     });
   }
 }
-const enumDetailNameOfPopularity = {
-  Low: "Low",
-  High: "High",
+const enumDetailNameOfWorking = {
+  YES: "Yes",
+  NO: "No",
 };
 
-function enumOrDetailOfPopularity(
-  enumOrDetail: PopularityWithExtraFieldDetailOptions | Popularity | undefined,
-): PopularityWithExtraFieldDetail {
+function enumOrDetailOfWorking(enumOrDetail: WorkingDetailOptions | Working | undefined): WorkingDetail {
   if (enumOrDetail === undefined) {
-    return newPopularityWithExtraFieldDetail();
+    return newWorkingDetail();
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
     return {
-      __typename: "PopularityWithExtraFieldDetail",
+      __typename: "WorkingDetail",
       code: enumOrDetail.code!,
-      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      name: enumDetailNameOfWorking[enumOrDetail.code!],
       ...enumOrDetail,
     };
   } else {
-    return newPopularityWithExtraFieldDetail({
-      code: enumOrDetail as Popularity,
-      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    return newWorkingDetail({
+      code: enumOrDetail as Working,
+      name: enumDetailNameOfWorking[enumOrDetail as Working],
     });
   }
 }
 
-function enumOrDetailOrNullOfPopularity(
-  enumOrDetail: PopularityWithExtraFieldDetailOptions | Popularity | undefined | null,
-): PopularityWithExtraFieldDetail | null {
+function enumOrDetailOrNullOfWorking(
+  enumOrDetail: WorkingDetailOptions | Working | undefined | null,
+): WorkingDetail | null {
   if (enumOrDetail === undefined) {
-    return newPopularityWithExtraFieldDetail();
+    return newWorkingDetail();
   } else if (enumOrDetail === null) {
     return null;
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
     return {
-      __typename: "PopularityWithExtraFieldDetail",
+      __typename: "WorkingDetail",
       code: enumOrDetail.code!,
-      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      name: enumDetailNameOfWorking[enumOrDetail.code!],
       ...enumOrDetail,
     };
   } else {
-    return newPopularityWithExtraFieldDetail({
-      code: enumOrDetail as Popularity,
-      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    return newWorkingDetail({
+      code: enumOrDetail as Working,
+      name: enumDetailNameOfWorking[enumOrDetail as Working],
     });
   }
 }
