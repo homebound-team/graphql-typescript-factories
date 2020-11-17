@@ -195,7 +195,7 @@ function isEnumDetailObject(object: GraphQLOutputType): object is GraphQLObjectT
   return (
     object instanceof GraphQLObjectType &&
     object.name.endsWith("Detail") &&
-    Object.keys(object.getFields()).length === 2 &&
+    Object.keys(object.getFields()).length >= 2 &&
     !!object.getFields()["code"] &&
     !!object.getFields()["name"]
   );
@@ -237,7 +237,7 @@ function addDeepPartial(chunks: Code[]): void {
   `);
 }
 
-function addNextIdMethods(chunks: Code[]) : void {
+function addNextIdMethods(chunks: Code[]): void {
   chunks.push(code`
     let nextFactoryIds: Record<string, number> = {};
 
@@ -251,5 +251,4 @@ function addNextIdMethods(chunks: Code[]) : void {
       return String(nextId);
     }
   `);
-
 }

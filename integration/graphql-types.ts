@@ -9,13 +9,13 @@ export type Scalars = {
   Date: any;
 };
 
-/** An entity that will be a mapped typed */
 export type Author = {
    __typename?: 'Author';
   id: Scalars['ID'];
   name: Scalars['String'];
   summary: AuthorSummary;
   popularity: PopularityDetail;
+  popularityV2: PopularityWithExtraFieldDetail;
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
@@ -25,7 +25,6 @@ export type AuthorInput = {
   name?: Maybe<Scalars['String']>;
 };
 
-/** A DTO that is just some fields */
 export type AuthorSummary = {
    __typename?: 'AuthorSummary';
   author: Author;
@@ -36,6 +35,7 @@ export type AuthorSummary = {
 export type Book = {
    __typename?: 'Book';
   name: Scalars['String'];
+  author: Author;
 };
 
 
@@ -58,6 +58,13 @@ export type PopularityDetail = {
    __typename?: 'PopularityDetail';
   code: Popularity;
   name: Scalars['String'];
+};
+
+export type PopularityWithExtraFieldDetail = {
+   __typename?: 'PopularityWithExtraFieldDetail';
+  code: Popularity;
+  name: Scalars['String'];
+  extraField: Scalars['Int'];
 };
 
 export type Query = {
@@ -90,9 +97,9 @@ export enum Working {
 }
 
 
-export type AuthorOptions = DeepPartial<Omit<Author, "popularity">> & {
+export type AuthorOptions = DeepPartial<Omit<Author, "popularity" | "popularityV2">> & {
   popularity?: Popularity | Partial<PopularityDetail>;
-};
+} & { popularityV2?: Popularity | Partial<PopularityWithExtraFieldDetail> };
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (cache["Author"] = {} as Author);
@@ -101,6 +108,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.name = options.name ?? "name";
   o.summary = maybeNewAuthorSummary(options.summary, cache);
   o.popularity = enumOrDetailOfPopularity(options.popularity);
+  o.popularityV2 = enumOrDetailOfPopularity(options.popularityV2);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
   o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
@@ -200,12 +208,56 @@ function maybeNewOrNullPopularityDetail(
   }
 }
 
+export type PopularityWithExtraFieldDetailOptions = DeepPartial<PopularityWithExtraFieldDetail>;
+
+export function newPopularityWithExtraFieldDetail(
+  options: PopularityWithExtraFieldDetailOptions = {},
+  cache: Record<string, any> = {},
+): PopularityWithExtraFieldDetail {
+  const o = (cache["PopularityWithExtraFieldDetail"] = {} as PopularityWithExtraFieldDetail);
+  o.__typename = "PopularityWithExtraFieldDetail";
+  o.code = options.code ?? Popularity.Low;
+  o.name = options.name ?? "Low";
+  o.extraField = options.extraField ?? 0;
+  return o;
+}
+
+function maybeNewPopularityWithExtraFieldDetail(
+  value: PopularityWithExtraFieldDetailOptions | undefined,
+  cache: Record<string, any>,
+): PopularityWithExtraFieldDetail {
+  if (value === undefined) {
+    return (
+      (cache["PopularityWithExtraFieldDetail"] as PopularityWithExtraFieldDetail) ??
+      newPopularityWithExtraFieldDetail({}, cache)
+    );
+  } else if (value.__typename) {
+    return value as PopularityWithExtraFieldDetail;
+  } else {
+    return newPopularityWithExtraFieldDetail(value, cache);
+  }
+}
+
+function maybeNewOrNullPopularityWithExtraFieldDetail(
+  value: PopularityWithExtraFieldDetailOptions | undefined | null,
+  cache: Record<string, any>,
+): PopularityWithExtraFieldDetail | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as PopularityWithExtraFieldDetail;
+  } else {
+    return newPopularityWithExtraFieldDetail(value, cache);
+  }
+}
+
 export type BookOptions = DeepPartial<Book>;
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (cache["Book"] = {} as Book);
   o.__typename = "Book";
   o.name = options.name ?? "name";
+  o.author = maybeNewAuthor(options.author, cache);
   return o;
 }
 
@@ -280,6 +332,27 @@ function enumOrDetailOfPopularity(enumOrDetail: Partial<PopularityDetail> | Popu
     return enumOrDetail as PopularityDetail;
   } else {
     return newPopularityDetail({
+      code: enumOrDetail as Popularity,
+      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    });
+  }
+}
+
+const enumDetailNameOfPopularity = {
+  Low: "Low",
+  High: "High",
+};
+
+// The enumOrDetailOf will probably not be Partial, but mark it to play nicely with DeepPartial
+function enumOrDetailOfPopularity(
+  enumOrDetail: Partial<PopularityWithExtraFieldDetail> | Popularity | undefined,
+): PopularityWithExtraFieldDetail {
+  if (enumOrDetail === undefined) {
+    return newPopularityWithExtraFieldDetail();
+  } else if (Object.keys(enumOrDetail).includes("code")) {
+    return enumOrDetail as PopularityWithExtraFieldDetail;
+  } else {
+    return newPopularityWithExtraFieldDetail({
       code: enumOrDetail as Popularity,
       name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
     });

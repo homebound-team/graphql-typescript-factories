@@ -4,6 +4,7 @@ type Author {
   name: String!
   summary: AuthorSummary!
   popularity: PopularityDetail!
+  popularityV2: PopularityWithExtraFieldDetail!
   working: Working
   birthday: Date
   books: [Book!]!
@@ -18,6 +19,7 @@ type AuthorSummary {
 
 type Book {
   name: String!
+  author: Author!
 }
 
 union SearchResult = Author | Book
@@ -53,6 +55,12 @@ enum Popularity {
 type PopularityDetail {
   code: Popularity!
   name: String!
+}
+
+type PopularityWithExtraFieldDetail {
+  code: Popularity!
+  name: String!
+  extraField: Int!
 }
 
 enum Working {
