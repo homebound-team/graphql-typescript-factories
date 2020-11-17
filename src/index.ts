@@ -85,7 +85,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
             code: enumOrDetail.code!,
             name: enumDetailNameOf${enumType.name}[enumOrDetail.code!],
             ...enumOrDetail,
-          }
+          } as ${type.name}
         } else {
           return new${type.name}({
             code: enumOrDetail as ${enumType.name},
@@ -95,24 +95,12 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
       }
 
       function enumOrDetailOrNullOf${enumType.name}(enumOrDetail: ${enumOrDetail} | null): ${type.name} | null {
-        if (enumOrDetail === undefined) {
-          return new${type.name}();
-        } else if (enumOrDetail === null) {
+        if (enumOrDetail === null) {
           return null;
-        } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
-          return {
-            __typename: "${type.name}",
-            code: enumOrDetail.code!,
-            name: enumDetailNameOf${enumType.name}[enumOrDetail.code!],
-            ...enumOrDetail,
-          }
-        } else {
-          return new${type.name}({
-            code: enumOrDetail as ${enumType.name},
-            name: enumDetailNameOf${enumType.name}[enumOrDetail as ${enumType.name}],
-          });
         }
-      }`);
+        return enumOrDetailOf${enumType.name}(enumOrDetail);
+      }
+    `);
   });
 }
 
