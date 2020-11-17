@@ -9,13 +9,13 @@ export type Scalars = {
   Date: any;
 };
 
-/** An entity that will be a mapped typed */
 export type Author = Named & {
    __typename?: 'Author';
   id: Scalars['ID'];
   name: Scalars['String'];
   summary: AuthorSummary;
   popularity: PopularityDetail;
+  popularityV2: PopularityWithExtraFieldDetail;
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
@@ -25,7 +25,6 @@ export type AuthorInput = {
   name?: Maybe<Scalars['String']>;
 };
 
-/** A DTO that is just some fields */
 export type AuthorSummary = {
    __typename?: 'AuthorSummary';
   author: Author;
@@ -36,11 +35,8 @@ export type AuthorSummary = {
 export type Book = Named & {
    __typename?: 'Book';
   name: Scalars['String'];
-  /** Example of a nullable enum */
   popularity?: Maybe<PopularityDetail>;
-  /** Example of a nullable reference */
   coauthor?: Maybe<Author>;
-  /** Purposefully use [...]-no-bang as a boundary case */
   reviews?: Maybe<Array<Maybe<BookReview>>>;
 };
 
@@ -57,7 +53,6 @@ export type CalendarInterval = {
 
 export type Child = {
    __typename?: 'Child';
-  /** For testing newChild() picks newAuthor */
   parent: Named;
 };
 
@@ -85,6 +80,13 @@ export type PopularityDetail = Named & {
    __typename?: 'PopularityDetail';
   code: Popularity;
   name: Scalars['String'];
+};
+
+export type PopularityWithExtraFieldDetail = {
+   __typename?: 'PopularityWithExtraFieldDetail';
+  code: Popularity;
+  name: Scalars['String'];
+  extraField: Scalars['Int'];
 };
 
 export type Query = {
@@ -125,6 +127,7 @@ export interface AuthorOptions {
   name?: Author["name"];
   summary?: AuthorSummaryOptions;
   popularity?: PopularityDetailOptions | Popularity;
+  popularityV2?: PopularityWithExtraFieldDetailOptions | Popularity;
   working?: Author["working"];
   birthday?: Author["birthday"];
   books?: Array<BookOptions>;
@@ -137,9 +140,10 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.name = options.name ?? "name";
   o.summary = maybeNewAuthorSummary(options.summary, cache);
   o.popularity = enumOrDetailOfPopularity(options.popularity);
+  o.popularityV2 = enumOrDetailOfPopularity(options.popularityV2);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
-  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache));
+  o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
   return o;
 }
 
@@ -216,6 +220,24 @@ export function newPopularityDetail(
   o.name = options.name ?? "Low";
   return o;
 }
+export interface PopularityWithExtraFieldDetailOptions {
+  __typename?: "PopularityWithExtraFieldDetail";
+  code?: PopularityWithExtraFieldDetail["code"];
+  name?: PopularityWithExtraFieldDetail["name"];
+  extraField?: PopularityWithExtraFieldDetail["extraField"];
+}
+
+export function newPopularityWithExtraFieldDetail(
+  options: PopularityWithExtraFieldDetailOptions = {},
+  cache: Record<string, any> = {},
+): PopularityWithExtraFieldDetail {
+  const o = (cache["PopularityWithExtraFieldDetail"] = {} as PopularityWithExtraFieldDetail);
+  o.__typename = "PopularityWithExtraFieldDetail";
+  o.code = options.code ?? Popularity.Low;
+  o.name = options.name ?? "Low";
+  o.extraField = options.extraField ?? 0;
+  return o;
+}
 export interface BookOptions {
   __typename?: "Book";
   name?: Book["name"];
@@ -230,7 +252,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
-  o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
+  o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
   return o;
 }
 
@@ -439,6 +461,52 @@ function enumOrDetailOrNullOfPopularity(
     };
   } else {
     return newPopularityDetail({
+      code: enumOrDetail as Popularity,
+      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    });
+  }
+}
+const enumDetailNameOfPopularity = {
+  Low: "Low",
+  High: "High",
+};
+
+function enumOrDetailOfPopularity(
+  enumOrDetail: PopularityWithExtraFieldDetailOptions | Popularity | undefined,
+): PopularityWithExtraFieldDetail {
+  if (enumOrDetail === undefined) {
+    return newPopularityWithExtraFieldDetail();
+  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+    return {
+      __typename: "PopularityWithExtraFieldDetail",
+      code: enumOrDetail.code!,
+      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      ...enumOrDetail,
+    };
+  } else {
+    return newPopularityWithExtraFieldDetail({
+      code: enumOrDetail as Popularity,
+      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
+    });
+  }
+}
+
+function enumOrDetailOrNullOfPopularity(
+  enumOrDetail: PopularityWithExtraFieldDetailOptions | Popularity | undefined | null,
+): PopularityWithExtraFieldDetail | null {
+  if (enumOrDetail === undefined) {
+    return newPopularityWithExtraFieldDetail();
+  } else if (enumOrDetail === null) {
+    return null;
+  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
+    return {
+      __typename: "PopularityWithExtraFieldDetail",
+      code: enumOrDetail.code!,
+      name: enumDetailNameOfPopularity[enumOrDetail.code!],
+      ...enumOrDetail,
+    };
+  } else {
+    return newPopularityWithExtraFieldDetail({
       code: enumOrDetail as Popularity,
       name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
     });
