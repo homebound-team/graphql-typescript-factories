@@ -433,7 +433,7 @@ function enumOrDetailOfPopularity(enumOrDetail: PopularityDetailOptions | Popula
       code: enumOrDetail.code!,
       name: enumDetailNameOfPopularity[enumOrDetail.code!],
       ...enumOrDetail,
-    };
+    } as PopularityDetail;
   } else {
     return newPopularityDetail({
       code: enumOrDetail as Popularity,
@@ -445,24 +445,12 @@ function enumOrDetailOfPopularity(enumOrDetail: PopularityDetailOptions | Popula
 function enumOrDetailOrNullOfPopularity(
   enumOrDetail: PopularityDetailOptions | Popularity | undefined | null,
 ): PopularityDetail | null {
-  if (enumOrDetail === undefined) {
-    return newPopularityDetail();
-  } else if (enumOrDetail === null) {
+  if (enumOrDetail === null) {
     return null;
-  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
-    return {
-      __typename: "PopularityDetail",
-      code: enumOrDetail.code!,
-      name: enumDetailNameOfPopularity[enumOrDetail.code!],
-      ...enumOrDetail,
-    };
-  } else {
-    return newPopularityDetail({
-      code: enumOrDetail as Popularity,
-      name: enumDetailNameOfPopularity[enumOrDetail as Popularity],
-    });
   }
+  return enumOrDetailOfPopularity(enumOrDetail);
 }
+
 const enumDetailNameOfWorking = {
   YES: "Yes",
   NO: "No",
@@ -477,7 +465,7 @@ function enumOrDetailOfWorking(enumOrDetail: WorkingDetailOptions | Working | un
       code: enumOrDetail.code!,
       name: enumDetailNameOfWorking[enumOrDetail.code!],
       ...enumOrDetail,
-    };
+    } as WorkingDetail;
   } else {
     return newWorkingDetail({
       code: enumOrDetail as Working,
@@ -489,24 +477,12 @@ function enumOrDetailOfWorking(enumOrDetail: WorkingDetailOptions | Working | un
 function enumOrDetailOrNullOfWorking(
   enumOrDetail: WorkingDetailOptions | Working | undefined | null,
 ): WorkingDetail | null {
-  if (enumOrDetail === undefined) {
-    return newWorkingDetail();
-  } else if (enumOrDetail === null) {
+  if (enumOrDetail === null) {
     return null;
-  } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
-    return {
-      __typename: "WorkingDetail",
-      code: enumOrDetail.code!,
-      name: enumDetailNameOfWorking[enumOrDetail.code!],
-      ...enumOrDetail,
-    };
-  } else {
-    return newWorkingDetail({
-      code: enumOrDetail as Working,
-      name: enumDetailNameOfWorking[enumOrDetail as Working],
-    });
   }
+  return enumOrDetailOfWorking(enumOrDetail);
 }
+
 let nextFactoryIds: Record<string, number> = {};
 
 export function resetFactoryIds() {
