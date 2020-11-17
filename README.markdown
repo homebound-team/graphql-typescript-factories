@@ -1,6 +1,6 @@
 [![NPM](https://img.shields.io/npm/v/@homebound/graphql-typescript-factories)](https://www.npmjs.com/package/@homebound/graphql-typescript-factories)
 
-# graphq-typescript-factories
+# graphql-typescript-factories
 
 This project is a plugin for [graphql-code-generator](http://www.graphql-code-generator.com) that generates `new<Foo>` factory methods for use in client-side GraphQL tests that are stubbing/mocking out GraphQL responses.
 
