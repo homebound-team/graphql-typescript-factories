@@ -1,4 +1,5 @@
 export type Maybe<T> = T | null;
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -10,7 +11,7 @@ export type Scalars = {
 };
 
 export type Author = Named & {
-   __typename?: 'Author';
+  __typename?: 'Author';
   id: Scalars['ID'];
   name: Scalars['String'];
   summary: AuthorSummary;
@@ -21,19 +22,15 @@ export type Author = Named & {
   books: Array<Book>;
 };
 
-export type AuthorInput = {
-  name?: Maybe<Scalars['String']>;
-};
-
 export type AuthorSummary = {
-   __typename?: 'AuthorSummary';
+  __typename?: 'AuthorSummary';
   author: Author;
   numberOfBooks: Scalars['Int'];
   amountOfSales?: Maybe<Scalars['Float']>;
 };
 
 export type Book = Named & {
-   __typename?: 'Book';
+  __typename?: 'Book';
   name: Scalars['String'];
   popularity?: Maybe<PopularityDetail>;
   coauthor?: Maybe<Author>;
@@ -41,49 +38,14 @@ export type Book = Named & {
 };
 
 export type BookReview = {
-   __typename?: 'BookReview';
+  __typename?: 'BookReview';
   rating: Scalars['Int'];
 };
 
-export type CalendarInterval = {
-   __typename?: 'CalendarInterval';
-  start: Scalars['Date'];
-  end: Scalars['Date'];
-};
-
-export type Child = {
-   __typename?: 'Child';
-  parent: Named;
-};
-
-
-export type Mutation = {
-   __typename?: 'Mutation';
-  saveAuthor: SaveAuthorResult;
-};
-
-
-export type MutationSaveAuthorArgs = {
-  input: AuthorInput;
-};
-
-export type Named = {
-  name: Scalars['String'];
-};
-
-export enum Popularity {
-  Low = 'Low',
-  High = 'High'
-}
-
-export type PopularityDetail = Named & {
-   __typename?: 'PopularityDetail';
-  code: Popularity;
-  name: Scalars['String'];
-};
+export type SearchResult = Author | Book;
 
 export type Query = {
-   __typename?: 'Query';
+  __typename?: 'Query';
   authors: Array<Author>;
   authorSummaries: Array<AuthorSummary>;
   search: Array<SearchResult>;
@@ -99,25 +61,63 @@ export type QuerySearchArgs = {
   query: Scalars['String'];
 };
 
+export type Mutation = {
+  __typename?: 'Mutation';
+  saveAuthor: SaveAuthorResult;
+};
+
+
+export type MutationSaveAuthorArgs = {
+  input: AuthorInput;
+};
+
 export type SaveAuthorResult = {
-   __typename?: 'SaveAuthorResult';
+  __typename?: 'SaveAuthorResult';
   author: Author;
 };
 
-export type SearchResult = Author | Book;
+export type AuthorInput = {
+  name?: Maybe<Scalars['String']>;
+};
+
+export type CalendarInterval = {
+  __typename?: 'CalendarInterval';
+  start: Scalars['Date'];
+  end: Scalars['Date'];
+};
+
+export enum Popularity {
+  Low = 'Low',
+  High = 'High'
+}
+
+export type PopularityDetail = Named & {
+  __typename?: 'PopularityDetail';
+  code: Popularity;
+  name: Scalars['String'];
+};
+
+export type WorkingDetail = {
+  __typename?: 'WorkingDetail';
+  code: Working;
+  name: Scalars['String'];
+  extraField: Scalars['Int'];
+};
 
 export enum Working {
   Yes = 'YES',
   No = 'NO'
 }
 
-export type WorkingDetail = {
-   __typename?: 'WorkingDetail';
-  code: Working;
+
+export type Named = {
   name: Scalars['String'];
-  extraField: Scalars['Int'];
 };
 
+export type Child = {
+  __typename?: 'Child';
+  parent: Named;
+};
 
 import { newDate } from "./testData";
 
@@ -143,7 +143,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.workingDetail = enumOrDetailOfWorking(options.workingDetail);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
-  o.books = (options.books ?? []).map(i => maybeNewBook(i, cache));
+  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache));
   return o;
 }
 
@@ -204,37 +204,6 @@ function maybeNewOrNullAuthorSummary(
     return newAuthorSummary(value, cache);
   }
 }
-export interface PopularityDetailOptions {
-  __typename?: "PopularityDetail";
-  code?: PopularityDetail["code"];
-  name?: PopularityDetail["name"];
-}
-
-export function newPopularityDetail(
-  options: PopularityDetailOptions = {},
-  cache: Record<string, any> = {},
-): PopularityDetail {
-  const o = (cache["PopularityDetail"] = {} as PopularityDetail);
-  o.__typename = "PopularityDetail";
-  o.code = options.code ?? Popularity.Low;
-  o.name = options.name ?? "Low";
-  return o;
-}
-export interface WorkingDetailOptions {
-  __typename?: "WorkingDetail";
-  code?: WorkingDetail["code"];
-  name?: WorkingDetail["name"];
-  extraField?: WorkingDetail["extraField"];
-}
-
-export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
-  const o = (cache["WorkingDetail"] = {} as WorkingDetail);
-  o.__typename = "WorkingDetail";
-  o.code = options.code ?? Working.Yes;
-  o.name = options.name ?? "Yes";
-  o.extraField = options.extraField ?? 0;
-  return o;
-}
 export interface BookOptions {
   __typename?: "Book";
   name?: Book["name"];
@@ -249,7 +218,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
-  o.reviews = (options.reviews ?? []).map(i => maybeNewOrNullBookReview(i, cache));
+  o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
   return o;
 }
 
@@ -387,6 +356,37 @@ function maybeNewOrNullCalendarInterval(
   } else {
     return newCalendarInterval(value, cache);
   }
+}
+export interface PopularityDetailOptions {
+  __typename?: "PopularityDetail";
+  code?: PopularityDetail["code"];
+  name?: PopularityDetail["name"];
+}
+
+export function newPopularityDetail(
+  options: PopularityDetailOptions = {},
+  cache: Record<string, any> = {},
+): PopularityDetail {
+  const o = (cache["PopularityDetail"] = {} as PopularityDetail);
+  o.__typename = "PopularityDetail";
+  o.code = options.code ?? Popularity.Low;
+  o.name = options.name ?? "Low";
+  return o;
+}
+export interface WorkingDetailOptions {
+  __typename?: "WorkingDetail";
+  code?: WorkingDetail["code"];
+  name?: WorkingDetail["name"];
+  extraField?: WorkingDetail["extraField"];
+}
+
+export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
+  const o = (cache["WorkingDetail"] = {} as WorkingDetail);
+  o.__typename = "WorkingDetail";
+  o.code = options.code ?? Working.Yes;
+  o.name = options.name ?? "Yes";
+  o.extraField = options.extraField ?? 0;
+  return o;
 }
 export interface ChildOptions {
   __typename?: "Child";
