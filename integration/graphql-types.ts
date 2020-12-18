@@ -419,6 +419,20 @@ function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Reco
     return newChild(value, cache);
   }
 }
+type NamedOptions = AuthorOptions | BookOptions | PopularityDetailOptions;
+
+type NamedType = Author | Book | PopularityDetail;
+
+function maybeNewNamed(value: NamedOptions | undefined, cache: Record<string, any>): NamedType {
+  if (value === undefined) {
+    return cache["Author"] || newAuthor({}, cache);
+  } else if (value.__typename) {
+    return value as NamedType;
+  } else {
+    return newAuthor((value as unknown) as AuthorOptions, cache);
+  }
+}
+
 const enumDetailNameOfPopularity = {
   Low: "Low",
   High: "High",

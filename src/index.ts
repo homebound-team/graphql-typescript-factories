@@ -1,5 +1,5 @@
+import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
 import { pascalCase, sentenceCase } from "change-case";
-import { Code, code, imp } from "ts-poet";
 import {
   GraphQLEnumType,
   GraphQLField,
@@ -11,9 +11,8 @@ import {
   GraphQLOutputType,
   GraphQLScalarType,
   GraphQLSchema,
-  GraphQLType,
 } from "graphql";
-import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
+import { Code, code, imp } from "ts-poet";
 import { SymbolSpec } from "ts-poet/build/SymbolSpecs";
 import PluginOutput = Types.PluginOutput;
 
@@ -21,19 +20,21 @@ import PluginOutput = Types.PluginOutput;
 export const plugin: PluginFunction = async (schema, documents, config: Config) => {
   const chunks: Code[] = [];
 
-  // Establish defaults for interfaces, i.e. Named --> assume its Author
-  const interfaceDefaults: Record<string, string> = {};
+  // Create a map of interface -> implementing types
+  const interfaceImpls: Record<string, string[]> = {};
   Object.values(schema.getTypeMap()).forEach(type => {
     if (type instanceof GraphQLObjectType) {
       for (const i of type.getInterfaces()) {
-        if (interfaceDefaults[i.name] === undefined) {
-          interfaceDefaults[i.name] = type.name;
+        if (interfaceImpls[i.name] === undefined) {
+          interfaceImpls[i.name] = [];
         }
+        interfaceImpls[i.name].push(type.name);
       }
     }
   });
 
-  generateFactoryFunctions(config, schema, interfaceDefaults, chunks);
+  generateFactoryFunctions(config, schema, interfaceImpls, chunks);
+  generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
   addNextIdMethods(chunks);
   const content = await code`${chunks}`.toStringWithImports();
@@ -43,13 +44,19 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 function generateFactoryFunctions(
   config: Config,
   schema: GraphQLSchema,
-  interfaceDefaults: Record<string, string>,
+  interfaceImpls: Record<string, string[]>,
   chunks: Code[],
 ) {
   Object.values(schema.getTypeMap()).forEach(type => {
     if (shouldCreateFactory(type)) {
-      chunks.push(...newFactory(config, interfaceDefaults, type));
+      chunks.push(...newFactory(config, interfaceImpls, type));
     }
+  });
+}
+
+function generateInterfaceFactoryFunctions(config: Config, interfaceImpls: Record<string, string[]>, chunks: Code[]) {
+  Object.entries(interfaceImpls).forEach(([interfaceName, impls]) => {
+    chunks.push(...newInterfaceFactory(config, interfaceName, impls));
   });
 }
 
@@ -105,7 +112,7 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
 }
 
 /** Creates a `new${type}` function for the given `type`. */
-function newFactory(config: Config, interfaceDefaults: Record<string, string>, type: GraphQLObjectType): Code[] {
+function newFactory(config: Config, interfaceImpls: Record<string, string[]>, type: GraphQLObjectType): Code[] {
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
@@ -164,7 +171,8 @@ function newFactory(config: Config, interfaceDefaults: Record<string, string>, t
           } else if (fieldType instanceof GraphQLObjectType) {
             return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
           } else if (fieldType instanceof GraphQLInterfaceType) {
-            const implTypeName = interfaceDefaults[fieldType.name] || fail();
+            // Default to the first type which happens to implement the interface
+            const implTypeName = interfaceImpls[fieldType.name][0] || fail();
             return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache);`;
           } else {
             return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
@@ -209,6 +217,32 @@ function newFactory(config: Config, interfaceDefaults: Record<string, string>, t
     }`;
 
   return [factory, ...(isEnumDetailObject(type) ? [] : [maybeFunctions])];
+}
+
+/** Creates a `new${type}` function for the given `type`. */
+function newInterfaceFactory(config: Config, interfaceName: string, impls: string[]): Code[] {
+  const defaultImpl = impls[0] || fail(`Interface ${interfaceName} is unused`);
+  return [
+    code`
+      type ${interfaceName}Options = ${impls.map(name => `${name}Options`).join(" | ")};
+    `,
+
+    code`
+      type ${interfaceName}Type = ${impls.join(" | ")};
+    `,
+
+    code`
+      function maybeNew${interfaceName}(value: ${interfaceName}Options | undefined, cache: Record<string, any>): ${interfaceName}Type {
+        if (value === undefined) {
+          return cache["${defaultImpl}"] || new${defaultImpl}({}, cache);
+        } else if (value.__typename) {
+          return value as ${interfaceName}Type;
+        } else {
+          return new${defaultImpl}(value as unknown as ${defaultImpl}Options, cache);
+        }
+      }
+    `,
+  ];
 }
 
 /** Returns a default value for the given field's type, i.e. strings are "", ints are 0, arrays are []. */
