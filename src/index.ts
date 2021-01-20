@@ -22,7 +22,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
   // Create a map of interface -> implementing types
   const interfaceImpls: Record<string, string[]> = {};
-  Object.values(schema.getTypeMap()).forEach((type) => {
+  Object.values(schema.getTypeMap()).forEach(type => {
     if (type instanceof GraphQLObjectType) {
       for (const i of type.getInterfaces()) {
         if (interfaceImpls[i.name] === undefined) {
@@ -47,7 +47,7 @@ function generateFactoryFunctions(
   interfaceImpls: Record<string, string[]>,
   chunks: Code[],
 ) {
-  Object.values(schema.getTypeMap()).forEach((type) => {
+  Object.values(schema.getTypeMap()).forEach(type => {
     if (shouldCreateFactory(type)) {
       chunks.push(...newFactory(config, interfaceImpls, type));
     }
@@ -65,21 +65,21 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
   const usedEnumDetailTypes = new Set(
     Object.values(schema.getTypeMap())
       .filter(shouldCreateFactory)
-      .flatMap((type) => {
+      .flatMap(type => {
         return Object.values(type.getFields())
-          .map((f) => unwrapNotNull(f.type))
+          .map(f => unwrapNotNull(f.type))
           .filter(isEnumDetailObject);
       }),
   );
 
-  usedEnumDetailTypes.forEach((type) => {
+  usedEnumDetailTypes.forEach(type => {
     const enumType = getRealEnumForEnumDetailObject(type);
     const enumOrDetail = `${type.name}Options | ${enumType.name} | undefined`;
     chunks.push(code`
       const enumDetailNameOf${enumType.name} = {
         ${enumType
           .getValues()
-          .map((v) => `${v.value}: "${sentenceCase(v.value)}"`)
+          .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
           .join(", ")}
       };
 
@@ -121,7 +121,7 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
       return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull${objectType}(i, cache));`;
     } else if (fieldType.ofType instanceof GraphQLNonNull && fieldType.ofType.ofType instanceof GraphQLObjectType) {
       const objectType = fieldType.ofType.ofType.name;
-      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew${objectType}(i, cache));`;
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew${objectType}(i, cache, options.hasOwnProperty("${f.name}")));`;
     } else {
       return `o.${f.name} = options.${f.name} ?? [];`;
     }
@@ -129,7 +129,7 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
 
   // Instead of using `DeepPartial`, we make an explicit `AuthorOptions` for each type, primarily
   // b/c the `AuthorOption.books: [BookOption]` will support enum details recursively.
-  const optionFields: Code[] = Object.values(type.getFields()).map((f) => {
+  const optionFields: Code[] = Object.values(type.getFields()).map(f => {
     const fieldType = maybeDenull(f.type);
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
       const orNull = f.type instanceof GraphQLNonNull ? "" : " | null";
@@ -160,7 +160,7 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};
       o.__typename = '${type.name}';
-      ${Object.values(type.getFields()).map((f) => {
+      ${Object.values(type.getFields()).map(f => {
         if (f.type instanceof GraphQLNonNull) {
           const fieldType = f.type.ofType;
           if (isEnumDetailObject(fieldType)) {
@@ -169,11 +169,11 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
           } else if (fieldType instanceof GraphQLList) {
             return generateListField(f, fieldType);
           } else if (fieldType instanceof GraphQLObjectType) {
-            return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache);`;
+            return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
           } else if (fieldType instanceof GraphQLInterfaceType) {
             // Default to the first type which happens to implement the interface
             const implTypeName = interfaceImpls[fieldType.name][0] || fail();
-            return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache);`;
+            return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
           } else {
             return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
           }
@@ -194,9 +194,9 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
 
   const maybeFunctions = code`
 
-    function maybeNew${type.name}(value: ${type.name}Options | undefined, cache: Record<string, any>): ${type.name} {
+    function maybeNew${type.name}(value: ${type.name}Options | undefined, cache: Record<string, any>, isSet: boolean = false): ${type.name} {
       if (value === undefined) {
-        return cache["${type.name}"] || new${type.name}({}, cache)
+        return isSet ? undefined : cache["${type.name}"] || new${type.name}({}, cache)
       } else if (value.__typename) {
         return value as ${type.name};
       } else {
@@ -220,10 +220,10 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
 /** Creates a `new${type}` function for the given `type`. */
 function newInterfaceFactory(config: Config, interfaceName: string, impls: string[]): Code[] {
   const defaultImpl = impls[0] || fail(`Interface ${interfaceName} is unused`);
-  const implNamesUnion = impls.map((n) => `"${n}"`);
+  const implNamesUnion = impls.map(n => `"${n}"`);
   return [
     code`
-      export type ${interfaceName}Options = ${impls.map((name) => `${name}Options`).join(" | ")};
+      export type ${interfaceName}Options = ${impls.map(name => `${name}Options`).join(" | ")};
     `,
 
     code`
@@ -231,7 +231,7 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
     `,
 
     code`
-      export type ${interfaceName}TypeName = ${impls.map((n) => `"${n}"`).join(" | ")};
+      export type ${interfaceName}TypeName = ${impls.map(n => `"${n}"`).join(" | ")};
     `,
 
     code`
