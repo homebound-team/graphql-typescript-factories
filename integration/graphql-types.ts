@@ -138,18 +138,18 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.__typename = "Author";
   o.id = options.id ?? nextFactoryId("Author");
   o.name = options.name ?? "name";
-  o.summary = maybeNewAuthorSummary(options.summary, cache);
+  o.summary = maybeNewAuthorSummary(options.summary, cache, options.hasOwnProperty("summary"));
   o.popularity = enumOrDetailOfPopularity(options.popularity);
   o.workingDetail = enumOrDetailOfWorking(options.workingDetail);
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
-  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache));
+  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache, options.hasOwnProperty("books")));
   return o;
 }
 
-function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, any>): Author {
+function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Author {
   if (value === undefined) {
-    return cache["Author"] || newAuthor({}, cache);
+    return isSet ? undefined : cache["Author"] || newAuthor({}, cache);
   } else if (value.__typename) {
     return value as Author;
   } else {
@@ -176,15 +176,19 @@ export interface AuthorSummaryOptions {
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (cache["AuthorSummary"] = {} as AuthorSummary);
   o.__typename = "AuthorSummary";
-  o.author = maybeNewAuthor(options.author, cache);
+  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
   o.numberOfBooks = options.numberOfBooks ?? 0;
   o.amountOfSales = options.amountOfSales ?? null;
   return o;
 }
 
-function maybeNewAuthorSummary(value: AuthorSummaryOptions | undefined, cache: Record<string, any>): AuthorSummary {
+function maybeNewAuthorSummary(
+  value: AuthorSummaryOptions | undefined,
+  cache: Record<string, any>,
+  isSet: boolean = false,
+): AuthorSummary {
   if (value === undefined) {
-    return cache["AuthorSummary"] || newAuthorSummary({}, cache);
+    return isSet ? undefined : cache["AuthorSummary"] || newAuthorSummary({}, cache);
   } else if (value.__typename) {
     return value as AuthorSummary;
   } else {
@@ -222,9 +226,9 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   return o;
 }
 
-function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>): Book {
+function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Book {
   if (value === undefined) {
-    return cache["Book"] || newBook({}, cache);
+    return isSet ? undefined : cache["Book"] || newBook({}, cache);
   } else if (value.__typename) {
     return value as Book;
   } else {
@@ -253,9 +257,13 @@ export function newBookReview(options: BookReviewOptions = {}, cache: Record<str
   return o;
 }
 
-function maybeNewBookReview(value: BookReviewOptions | undefined, cache: Record<string, any>): BookReview {
+function maybeNewBookReview(
+  value: BookReviewOptions | undefined,
+  cache: Record<string, any>,
+  isSet: boolean = false,
+): BookReview {
   if (value === undefined) {
-    return cache["BookReview"] || newBookReview({}, cache);
+    return isSet ? undefined : cache["BookReview"] || newBookReview({}, cache);
   } else if (value.__typename) {
     return value as BookReview;
   } else {
@@ -286,16 +294,17 @@ export function newSaveAuthorResult(
 ): SaveAuthorResult {
   const o = (cache["SaveAuthorResult"] = {} as SaveAuthorResult);
   o.__typename = "SaveAuthorResult";
-  o.author = maybeNewAuthor(options.author, cache);
+  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
   return o;
 }
 
 function maybeNewSaveAuthorResult(
   value: SaveAuthorResultOptions | undefined,
   cache: Record<string, any>,
+  isSet: boolean = false,
 ): SaveAuthorResult {
   if (value === undefined) {
-    return cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
+    return isSet ? undefined : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
   } else if (value.__typename) {
     return value as SaveAuthorResult;
   } else {
@@ -335,9 +344,10 @@ export function newCalendarInterval(
 function maybeNewCalendarInterval(
   value: CalendarIntervalOptions | undefined,
   cache: Record<string, any>,
+  isSet: boolean = false,
 ): CalendarInterval {
   if (value === undefined) {
-    return cache["CalendarInterval"] || newCalendarInterval({}, cache);
+    return isSet ? undefined : cache["CalendarInterval"] || newCalendarInterval({}, cache);
   } else if (value.__typename) {
     return value as CalendarInterval;
   } else {
@@ -396,13 +406,13 @@ export interface ChildOptions {
 export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
   const o = (cache["Child"] = {} as Child);
   o.__typename = "Child";
-  o.parent = maybeNewAuthor(options.parent, cache);
+  o.parent = maybeNewAuthor(options.parent, cache, options.hasOwnProperty("parent"));
   return o;
 }
 
-function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, any>): Child {
+function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Child {
   if (value === undefined) {
-    return cache["Child"] || newChild({}, cache);
+    return isSet ? undefined : cache["Child"] || newChild({}, cache);
   } else if (value.__typename) {
     return value as Child;
   } else {

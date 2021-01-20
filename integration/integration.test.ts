@@ -55,4 +55,15 @@ describe("typescript-factories", () => {
     const c = newChild();
     expect((c.parent as any).__typename).toEqual("Author");
   });
+
+  it("keeps property as undefined if option is explicitly set to undefined", () => {
+    const a = newAuthor({ summary: undefined });
+    expect(a.__typename).toEqual("Author");
+    expect(a.summary).toBeUndefined();
+  });
+
+  it("generates property if option is not passed", () => {
+    const a = newAuthor({});
+    expect(a.summary.__typename).toEqual("AuthorSummary");
+  });
 });
