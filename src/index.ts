@@ -347,7 +347,7 @@ function addNextIdMethods(chunks: Code[]): void {
 function addTemporaryOverrides(config: Config, chunks: Code[]): void {
   if (config.includeOnErrorOverride) {
     chunks.push(code`
-    defaultOptions.onError = (e: any) => { const { baseOnError } = require("src/utils/baseOnError"); baseOnError(e) }
+    (defaultOptions as any).onError = (e: any) => { const { baseOnError } = require("src/utils/baseOnError"); baseOnError(e) }
   `);
   };
 }
