@@ -79,9 +79,9 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
     chunks.push(code`
       const enumDetailNameOf${enumType.name} = {
         ${enumType
-        .getValues()
-        .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
-        .join(", ")}
+          .getValues()
+          .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
+          .join(", ")}
       };
 
       function enumOrDetailOf${enumType.name}(enumOrDetail: ${enumOrDetail}): ${type.name} {
@@ -162,34 +162,34 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
       const o = cache["${type.name}"] = {} as ${type.name};
       o.__typename = '${type.name}';
       ${Object.values(type.getFields()).map(f => {
-    if (f.type instanceof GraphQLNonNull) {
-      const fieldType = f.type.ofType;
-      if (isEnumDetailObject(fieldType)) {
-        const enumType = getRealEnumForEnumDetailObject(fieldType);
-        return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
-      } else if (fieldType instanceof GraphQLList) {
-        return generateListField(f, fieldType);
-      } else if (fieldType instanceof GraphQLObjectType) {
-        return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
-      } else if (fieldType instanceof GraphQLInterfaceType) {
-        // Default to the first type which happens to implement the interface
-        const implTypeName = interfaceImpls[fieldType.name][0] || fail();
-        return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
-      } else {
-        return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
-      }
-    } else if (f.type instanceof GraphQLObjectType) {
-      if (isEnumDetailObject(f.type)) {
-        const enumType = getRealEnumForEnumDetailObject(f.type);
-        return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
-      }
-      return `o.${f.name} = maybeNewOrNull${(f.type as any).name}(options.${f.name}, cache);`;
-    } else if (f.type instanceof GraphQLList) {
-      return generateListField(f, f.type);
-    } else {
-      return `o.${f.name} = options.${f.name} ?? null;`;
-    }
-  })}
+        if (f.type instanceof GraphQLNonNull) {
+          const fieldType = f.type.ofType;
+          if (isEnumDetailObject(fieldType)) {
+            const enumType = getRealEnumForEnumDetailObject(fieldType);
+            return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
+          } else if (fieldType instanceof GraphQLList) {
+            return generateListField(f, fieldType);
+          } else if (fieldType instanceof GraphQLObjectType) {
+            return `o.${f.name} = maybeNew${fieldType.name}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
+          } else if (fieldType instanceof GraphQLInterfaceType) {
+            // Default to the first type which happens to implement the interface
+            const implTypeName = interfaceImpls[fieldType.name][0] || fail();
+            return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
+          } else {
+            return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
+          }
+        } else if (f.type instanceof GraphQLObjectType) {
+          if (isEnumDetailObject(f.type)) {
+            const enumType = getRealEnumForEnumDetailObject(f.type);
+            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
+          }
+          return `o.${f.name} = maybeNewOrNull${(f.type as any).name}(options.${f.name}, cache);`;
+        } else if (f.type instanceof GraphQLList) {
+          return generateListField(f, f.type);
+        } else {
+          return `o.${f.name} = options.${f.name} ?? null;`;
+        }
+      })}
       return o;
     }`;
 
@@ -347,9 +347,9 @@ function addNextIdMethods(chunks: Code[]): void {
 function addTemporaryOverrides(config: Config, chunks: Code[]): void {
   if (config.includeOnErrorOverride) {
     chunks.push(code`
-    defaultOptions.onError = (e: any) => { const { baseOnError } = require("src/utils/baseOnError"); baseOnError(e) }
+    (defaultOptions as any).onError = (e: any) => { const { baseOnError } = require("src/utils/baseOnError"); baseOnError(e) }
   `);
-  };
+  }
 }
 
 function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
