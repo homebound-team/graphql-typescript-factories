@@ -5,6 +5,7 @@ generates:
     config:
       scalarDefaults:
         Date: "./testData#newDate"
+      includeOnErrorOverride: true
     plugins:
       - typescript
       - typescript-operations
