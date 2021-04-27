@@ -37,7 +37,6 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
   addNextIdMethods(chunks);
-  addTemporaryOverrides(config, chunks);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
@@ -344,14 +343,6 @@ function addNextIdMethods(chunks: Code[]): void {
   `);
 }
 
-function addTemporaryOverrides(config: Config, chunks: Code[]): void {
-  if (config.includeOnErrorOverride) {
-    chunks.push(code`
-    (defaultOptions as any).onError = (e: any) => { const { baseOnError } = require("src/utils/baseOnError"); baseOnError(e) }
-  `);
-  }
-}
-
 function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
   return o instanceof GraphQLNonNull ? o.ofType : o;
 }
@@ -359,7 +350,6 @@ function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
 /** The config values we read from the graphql-codegen.yml file. */
 export type Config = {
   scalarDefaults: Record<string, string>;
-  includeOnErrorOverride: Boolean;
 };
 
 // Maps the graphql-code-generation convention of `@src/context#Context` to ts-poet's `Context@@src/context`.
