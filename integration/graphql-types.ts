@@ -1,5 +1,7 @@
 export type Maybe<T> = T | null;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -22,6 +24,10 @@ export type Author = Named & {
   books: Array<Book>;
 };
 
+export type AuthorInput = {
+  name?: Maybe<Scalars['String']>;
+};
+
 export type AuthorSummary = {
   __typename?: 'AuthorSummary';
   author: Author;
@@ -42,7 +48,42 @@ export type BookReview = {
   rating: Scalars['Int'];
 };
 
-export type SearchResult = Author | Book;
+export type CalendarInterval = {
+  __typename?: 'CalendarInterval';
+  start: Scalars['Date'];
+  end: Scalars['Date'];
+};
+
+export type Child = {
+  __typename?: 'Child';
+  parent: Named;
+};
+
+
+export type Mutation = {
+  __typename?: 'Mutation';
+  saveAuthor: SaveAuthorResult;
+};
+
+
+export type MutationSaveAuthorArgs = {
+  input: AuthorInput;
+};
+
+export type Named = {
+  name: Scalars['String'];
+};
+
+export enum Popularity {
+  Low = 'Low',
+  High = 'High'
+}
+
+export type PopularityDetail = Named & {
+  __typename?: 'PopularityDetail';
+  code: Popularity;
+  name: Scalars['String'];
+};
 
 export type Query = {
   __typename?: 'Query';
@@ -61,62 +102,23 @@ export type QuerySearchArgs = {
   query: Scalars['String'];
 };
 
-export type Mutation = {
-  __typename?: 'Mutation';
-  saveAuthor: SaveAuthorResult;
-};
-
-
-export type MutationSaveAuthorArgs = {
-  input: AuthorInput;
-};
-
 export type SaveAuthorResult = {
   __typename?: 'SaveAuthorResult';
   author: Author;
 };
 
-export type AuthorInput = {
-  name?: Maybe<Scalars['String']>;
-};
-
-export type CalendarInterval = {
-  __typename?: 'CalendarInterval';
-  start: Scalars['Date'];
-  end: Scalars['Date'];
-};
-
-export enum Popularity {
-  Low = 'Low',
-  High = 'High'
-}
-
-export type PopularityDetail = Named & {
-  __typename?: 'PopularityDetail';
-  code: Popularity;
-  name: Scalars['String'];
-};
-
-export type WorkingDetail = {
-  __typename?: 'WorkingDetail';
-  code: Working;
-  name: Scalars['String'];
-  extraField: Scalars['Int'];
-};
+export type SearchResult = Author | Book;
 
 export enum Working {
   Yes = 'YES',
   No = 'NO'
 }
 
-
-export type Named = {
+export type WorkingDetail = {
+  __typename?: 'WorkingDetail';
+  code: Working;
   name: Scalars['String'];
-};
-
-export type Child = {
-  __typename?: 'Child';
-  parent: Named;
+  extraField: Scalars['Int'];
 };
 
 import { newDate } from "./testData";
@@ -283,47 +285,6 @@ function maybeNewOrNullBookReview(
     return newBookReview(value, cache);
   }
 }
-export interface SaveAuthorResultOptions {
-  __typename?: "SaveAuthorResult";
-  author?: AuthorOptions;
-}
-
-export function newSaveAuthorResult(
-  options: SaveAuthorResultOptions = {},
-  cache: Record<string, any> = {},
-): SaveAuthorResult {
-  const o = (cache["SaveAuthorResult"] = {} as SaveAuthorResult);
-  o.__typename = "SaveAuthorResult";
-  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
-  return o;
-}
-
-function maybeNewSaveAuthorResult(
-  value: SaveAuthorResultOptions | undefined,
-  cache: Record<string, any>,
-  isSet: boolean = false,
-): SaveAuthorResult {
-  if (value === undefined) {
-    return isSet ? undefined : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
-  } else if (value.__typename) {
-    return value as SaveAuthorResult;
-  } else {
-    return newSaveAuthorResult(value, cache);
-  }
-}
-
-function maybeNewOrNullSaveAuthorResult(
-  value: SaveAuthorResultOptions | undefined | null,
-  cache: Record<string, any>,
-): SaveAuthorResult | null {
-  if (!value) {
-    return null;
-  } else if (value.__typename) {
-    return value as SaveAuthorResult;
-  } else {
-    return newSaveAuthorResult(value, cache);
-  }
-}
 export interface CalendarIntervalOptions {
   __typename?: "CalendarInterval";
   start?: CalendarInterval["start"];
@@ -367,37 +328,6 @@ function maybeNewOrNullCalendarInterval(
     return newCalendarInterval(value, cache);
   }
 }
-export interface PopularityDetailOptions {
-  __typename?: "PopularityDetail";
-  code?: PopularityDetail["code"];
-  name?: PopularityDetail["name"];
-}
-
-export function newPopularityDetail(
-  options: PopularityDetailOptions = {},
-  cache: Record<string, any> = {},
-): PopularityDetail {
-  const o = (cache["PopularityDetail"] = {} as PopularityDetail);
-  o.__typename = "PopularityDetail";
-  o.code = options.code ?? Popularity.Low;
-  o.name = options.name ?? "Low";
-  return o;
-}
-export interface WorkingDetailOptions {
-  __typename?: "WorkingDetail";
-  code?: WorkingDetail["code"];
-  name?: WorkingDetail["name"];
-  extraField?: WorkingDetail["extraField"];
-}
-
-export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
-  const o = (cache["WorkingDetail"] = {} as WorkingDetail);
-  o.__typename = "WorkingDetail";
-  o.code = options.code ?? Working.Yes;
-  o.name = options.name ?? "Yes";
-  o.extraField = options.extraField ?? 0;
-  return o;
-}
 export interface ChildOptions {
   __typename?: "Child";
   parent?: Child["parent"];
@@ -429,6 +359,78 @@ function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Reco
     return newChild(value, cache);
   }
 }
+export interface PopularityDetailOptions {
+  __typename?: "PopularityDetail";
+  code?: PopularityDetail["code"];
+  name?: PopularityDetail["name"];
+}
+
+export function newPopularityDetail(
+  options: PopularityDetailOptions = {},
+  cache: Record<string, any> = {},
+): PopularityDetail {
+  const o = (cache["PopularityDetail"] = {} as PopularityDetail);
+  o.__typename = "PopularityDetail";
+  o.code = options.code ?? Popularity.Low;
+  o.name = options.name ?? "Low";
+  return o;
+}
+export interface SaveAuthorResultOptions {
+  __typename?: "SaveAuthorResult";
+  author?: AuthorOptions;
+}
+
+export function newSaveAuthorResult(
+  options: SaveAuthorResultOptions = {},
+  cache: Record<string, any> = {},
+): SaveAuthorResult {
+  const o = (cache["SaveAuthorResult"] = {} as SaveAuthorResult);
+  o.__typename = "SaveAuthorResult";
+  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
+  return o;
+}
+
+function maybeNewSaveAuthorResult(
+  value: SaveAuthorResultOptions | undefined,
+  cache: Record<string, any>,
+  isSet: boolean = false,
+): SaveAuthorResult {
+  if (value === undefined) {
+    return isSet ? undefined : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
+  } else if (value.__typename) {
+    return value as SaveAuthorResult;
+  } else {
+    return newSaveAuthorResult(value, cache);
+  }
+}
+
+function maybeNewOrNullSaveAuthorResult(
+  value: SaveAuthorResultOptions | undefined | null,
+  cache: Record<string, any>,
+): SaveAuthorResult | null {
+  if (!value) {
+    return null;
+  } else if (value.__typename) {
+    return value as SaveAuthorResult;
+  } else {
+    return newSaveAuthorResult(value, cache);
+  }
+}
+export interface WorkingDetailOptions {
+  __typename?: "WorkingDetail";
+  code?: WorkingDetail["code"];
+  name?: WorkingDetail["name"];
+  extraField?: WorkingDetail["extraField"];
+}
+
+export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
+  const o = (cache["WorkingDetail"] = {} as WorkingDetail);
+  o.__typename = "WorkingDetail";
+  o.code = options.code ?? Working.Yes;
+  o.name = options.name ?? "Yes";
+  o.extraField = options.extraField ?? 0;
+  return o;
+}
 export type NamedOptions = AuthorOptions | BookOptions | PopularityDetailOptions;
 
 export type NamedType = Author | Book | PopularityDetail;
@@ -441,7 +443,7 @@ function maybeNewNamed(value: NamedOptions | undefined, cache: Record<string, an
   } else if (value.__typename) {
     return value as NamedType;
   } else {
-    return newAuthor((value as unknown) as AuthorOptions, cache);
+    return newAuthor(value as unknown as AuthorOptions, cache);
   }
 }
 
@@ -451,7 +453,7 @@ function maybeNewOrNullNamed(value: NamedOptions | undefined | null, cache: Reco
   } else if (value.__typename) {
     return value as NamedType;
   } else {
-    return newAuthor((value as unknown) as AuthorOptions, cache);
+    return newAuthor(value as unknown as AuthorOptions, cache);
   }
 }
 
