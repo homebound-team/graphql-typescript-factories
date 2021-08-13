@@ -12,8 +12,7 @@ import {
   GraphQLScalarType,
   GraphQLSchema,
 } from "graphql";
-import { Code, code, imp } from "ts-poet";
-import { SymbolSpec } from "ts-poet/build/SymbolSpecs";
+import { Code, code, imp, Import } from "ts-poet";
 import PluginOutput = Types.PluginOutput;
 
 /** Generates `newProject({ ... })` factory functions in our `graphql-types` codegen output. */
@@ -22,7 +21,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
   // Create a map of interface -> implementing types
   const interfaceImpls: Record<string, string[]> = {};
-  Object.values(schema.getTypeMap()).forEach(type => {
+  Object.values(schema.getTypeMap()).forEach((type) => {
     if (type instanceof GraphQLObjectType) {
       for (const i of type.getInterfaces()) {
         if (interfaceImpls[i.name] === undefined) {
@@ -47,7 +46,7 @@ function generateFactoryFunctions(
   interfaceImpls: Record<string, string[]>,
   chunks: Code[],
 ) {
-  Object.values(schema.getTypeMap()).forEach(type => {
+  Object.values(schema.getTypeMap()).forEach((type) => {
     if (shouldCreateFactory(type)) {
       chunks.push(...newFactory(config, interfaceImpls, type));
     }
@@ -65,21 +64,21 @@ function generateEnumDetailHelperFunctions(schema: GraphQLSchema, chunks: Code[]
   const usedEnumDetailTypes = new Set(
     Object.values(schema.getTypeMap())
       .filter(shouldCreateFactory)
-      .flatMap(type => {
+      .flatMap((type) => {
         return Object.values(type.getFields())
-          .map(f => unwrapNotNull(f.type))
+          .map((f) => unwrapNotNull(f.type))
           .filter(isEnumDetailObject);
       }),
   );
 
-  usedEnumDetailTypes.forEach(type => {
+  usedEnumDetailTypes.forEach((type) => {
     const enumType = getRealEnumForEnumDetailObject(type);
     const enumOrDetail = `${type.name}Options | ${enumType.name} | undefined`;
     chunks.push(code`
       const enumDetailNameOf${enumType.name} = {
         ${enumType
           .getValues()
-          .map(v => `${v.value}: "${sentenceCase(v.value)}"`)
+          .map((v) => `${v.value}: "${sentenceCase(v.value)}"`)
           .join(", ")}
       };
 
@@ -129,7 +128,7 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
 
   // Instead of using `DeepPartial`, we make an explicit `AuthorOptions` for each type, primarily
   // b/c the `AuthorOption.books: [BookOption]` will support enum details recursively.
-  const optionFields: Code[] = Object.values(type.getFields()).map(f => {
+  const optionFields: Code[] = Object.values(type.getFields()).map((f) => {
     const fieldType = maybeDenull(f.type);
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
       const orNull = f.type instanceof GraphQLNonNull ? "" : " | null";
@@ -160,7 +159,7 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${type.name} {
       const o = cache["${type.name}"] = {} as ${type.name};
       o.__typename = '${type.name}';
-      ${Object.values(type.getFields()).map(f => {
+      ${Object.values(type.getFields()).map((f) => {
         if (f.type instanceof GraphQLNonNull) {
           const fieldType = f.type.ofType;
           if (isEnumDetailObject(fieldType)) {
@@ -220,10 +219,10 @@ function newFactory(config: Config, interfaceImpls: Record<string, string[]>, ty
 /** Creates a `new${type}` function for the given `type`. */
 function newInterfaceFactory(config: Config, interfaceName: string, impls: string[]): Code[] {
   const defaultImpl = impls[0] || fail(`Interface ${interfaceName} is unused`);
-  const implNamesUnion = impls.map(n => `"${n}"`);
+  const implNamesUnion = impls.map((n) => `"${n}"`);
   return [
     code`
-      export type ${interfaceName}Options = ${impls.map(name => `${name}Options`).join(" | ")};
+      export type ${interfaceName}Options = ${impls.map((name) => `${name}Options`).join(" | ")};
     `,
 
     code`
@@ -231,7 +230,7 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
     `,
 
     code`
-      export type ${interfaceName}TypeName = ${impls.map(n => `"${n}"`).join(" | ")};
+      export type ${interfaceName}TypeName = ${impls.map((n) => `"${n}"`).join(" | ")};
     `,
 
     code`
@@ -353,7 +352,7 @@ export type Config = {
 };
 
 // Maps the graphql-code-generation convention of `@src/context#Context` to ts-poet's `Context@@src/context`.
-export function toImp(spec: string): SymbolSpec {
+export function toImp(spec: string): Import {
   const [path, symbol] = spec.split("#");
   return imp(`${symbol}@${path}`);
 }
