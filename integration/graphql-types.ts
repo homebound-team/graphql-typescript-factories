@@ -30,6 +30,7 @@ export type AuthorInput = {
 
 export type AuthorSummary = {
   __typename?: 'AuthorSummary';
+  id: Scalars['ID'];
   author: Author;
   numberOfBooks: Scalars['Int'];
   amountOfSales?: Maybe<Scalars['Float']>;
@@ -170,6 +171,7 @@ function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Re
 }
 export interface AuthorSummaryOptions {
   __typename?: "AuthorSummary";
+  id?: AuthorSummary["id"];
   author?: AuthorOptions;
   numberOfBooks?: AuthorSummary["numberOfBooks"];
   amountOfSales?: AuthorSummary["amountOfSales"];
@@ -178,6 +180,7 @@ export interface AuthorSummaryOptions {
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (cache["AuthorSummary"] = {} as AuthorSummary);
   o.__typename = "AuthorSummary";
+  o.id = options.id ?? nextFactoryId("AuthorSummary");
   o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
   o.numberOfBooks = options.numberOfBooks ?? 0;
   o.amountOfSales = options.amountOfSales ?? null;
@@ -521,6 +524,7 @@ function enumOrDetailOrNullOfWorking(
   return enumOrDetailOfWorking(enumOrDetail);
 }
 
+const taggedIds: Record<string, string> = { AuthorSummary: "summary" };
 let nextFactoryIds: Record<string, number> = {};
 
 export function resetFactoryIds() {
@@ -530,5 +534,6 @@ export function resetFactoryIds() {
 function nextFactoryId(objectName: string): string {
   const nextId = nextFactoryIds[objectName] || 1;
   nextFactoryIds[objectName] = nextId + 1;
-  return String(nextId);
+  const tag = taggedIds[objectName] ?? objectName.replace(/[a-z]/g, "").toLowerCase();
+  return tag + ":" + nextId;
 }

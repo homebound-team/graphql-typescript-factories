@@ -35,7 +35,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   generateFactoryFunctions(config, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(schema, chunks);
-  addNextIdMethods(chunks);
+  addNextIdMethods(chunks, config);
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
@@ -326,8 +326,9 @@ function shouldCreateFactory(type: GraphQLNamedType): type is GraphQLObjectType 
   );
 }
 
-function addNextIdMethods(chunks: Code[]): void {
+function addNextIdMethods(chunks: Code[], config: Config): void {
   chunks.push(code`
+     const taggedIds: Record<string, string> = ${config.taggedIds};
     let nextFactoryIds: Record<string, number> = {};
 
     export function resetFactoryIds() {
@@ -337,7 +338,8 @@ function addNextIdMethods(chunks: Code[]): void {
     function nextFactoryId(objectName: string): string {
       const nextId = nextFactoryIds[objectName] || 1;
       nextFactoryIds[objectName] = nextId + 1;
-      return String(nextId);
+      const tag = taggedIds[objectName] ?? objectName.replace(/[a-z]/g, "").toLowerCase();
+      return tag + ":" + nextId; 
     }
   `);
 }
@@ -349,6 +351,7 @@ function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
 /** The config values we read from the graphql-codegen.yml file. */
 export type Config = {
   scalarDefaults: Record<string, string>;
+  taggedIds: Record<string, string>;
 };
 
 // Maps the graphql-code-generation convention of `@src/context#Context` to ts-poet's `Context@@src/context`.

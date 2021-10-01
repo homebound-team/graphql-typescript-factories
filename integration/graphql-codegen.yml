@@ -5,6 +5,8 @@ generates:
     config:
       scalarDefaults:
         Date: "./testData#newDate"
+      taggedIds:
+        AuthorSummary: "summary"
     plugins:
       - typescript
       - typescript-operations
