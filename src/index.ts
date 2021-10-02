@@ -338,7 +338,7 @@ function addNextIdMethods(chunks: Code[], config: Config): void {
     function nextFactoryId(objectName: string): string {
       const nextId = nextFactoryIds[objectName] || 1;
       nextFactoryIds[objectName] = nextId + 1;
-      const tag = taggedIds[objectName] ?? objectName.replace(/[a-z]/g, "").toLowerCase();
+      const tag = (taggedIds && taggedIds[objectName]) ?? objectName.replace(/[a-z]/g, "").toLowerCase();
       return tag + ":" + nextId; 
     }
   `);
@@ -351,7 +351,7 @@ function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
 /** The config values we read from the graphql-codegen.yml file. */
 export type Config = {
   scalarDefaults: Record<string, string>;
-  taggedIds: Record<string, string>;
+  taggedIds?: Record<string, string>;
 };
 
 // Maps the graphql-code-generation convention of `@src/context#Context` to ts-poet's `Context@@src/context`.
