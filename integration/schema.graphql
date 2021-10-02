@@ -12,6 +12,7 @@ type Author implements Named {
 
 # A DTO that is just some fields
 type AuthorSummary {
+  id: ID!
   author: Author!
   numberOfBooks: Int!
   amountOfSales: Float

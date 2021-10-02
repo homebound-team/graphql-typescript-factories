@@ -1,5 +1,13 @@
 import { jan1 } from "./testData";
-import { newAuthor, newBook, newCalendarInterval, newChild, Popularity, resetFactoryIds } from "./graphql-types";
+import {
+  newAuthor,
+  newAuthorSummary,
+  newBook,
+  newCalendarInterval,
+  newChild,
+  Popularity,
+  resetFactoryIds,
+} from "./graphql-types";
 
 describe("typescript-factories", () => {
   it("does not infinite loop", () => {
@@ -22,11 +30,17 @@ describe("typescript-factories", () => {
     resetFactoryIds();
     const a1 = newAuthor({});
     const a2 = newAuthor({});
-    expect(a1.id).toEqual("1");
-    expect(a2.id).toEqual("2");
+    expect(a1.id).toEqual("a:1");
+    expect(a2.id).toEqual("a:2");
     resetFactoryIds();
     const a3 = newAuthor({});
-    expect(a3.id).toEqual("1");
+    expect(a3.id).toEqual("a:1");
+  });
+
+  it("creates tagged ids based on config", () => {
+    resetFactoryIds();
+    const as = newAuthorSummary({});
+    expect(as.id).toEqual("summary:1");
   });
 
   it("fills in type name of enums", () => {
