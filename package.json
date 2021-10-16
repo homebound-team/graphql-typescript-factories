@@ -9,7 +9,8 @@
     "test": "./node_modules/.bin/jest --watch",
     "coverage": "./node_modules/.bin/jest --collectCoverage",
     "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'",
-    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml"
+    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml",
+    "graphql-codegen-types-separate": "graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
   },
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^2.0.0",
@@ -18,6 +19,7 @@
     "ts-poet": "^4.5.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.15.8",
     "@graphql-codegen/cli": "^2.0.1",
     "@graphql-codegen/typescript-operations": "^2.0.1",
     "@types/jest": "^27.0.1",
