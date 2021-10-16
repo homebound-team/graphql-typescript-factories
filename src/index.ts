@@ -23,9 +23,9 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
   if (!!config.typeDeclarationFilePath) {
     let typeImportPath = config.typeDeclarationFilePath;
-    if ( typeImportPath.endsWith(".ts") || typeImportPath.endsWith(".js") ) {
+    if (typeImportPath.endsWith(".ts") || typeImportPath.endsWith(".js")) {
       typeImportPath = typeImportPath.slice(0, -3);
-    } else if ( typeImportPath.endsWith(".tsx") || typeImportPath.endsWith(".jsx")) {
+    } else if (typeImportPath.endsWith(".tsx") || typeImportPath.endsWith(".jsx")) {
       typeImportPath = typeImportPath.slice(0, -4);
     }
     chunks.push(
