@@ -1,6 +1,6 @@
 import { jan1 } from "./testData";
 
-import * as TypesAndFactories from "./graphql-types"
+import * as TypesAndFactories from "./graphql-types-and-factories"
 import * as TypesOnly from "./graphql-types-only"
 import * as FactoriesOnly from "./graphql-type-factories"
 
