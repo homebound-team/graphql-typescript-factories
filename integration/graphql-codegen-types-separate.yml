@@ -12,6 +12,6 @@ generates:
       - typescript-operations
   integration/graphql-type-factories.ts:
     config:
-      typeDeclarationFilePath: "./graphql-types-only.ts"
+      typeFilePath: "./graphql-types-only"
     plugins:
       - ./build/index.js
