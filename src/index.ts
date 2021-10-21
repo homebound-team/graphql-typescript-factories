@@ -22,9 +22,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   const chunks: Code[] = [];
 
   if (!!config.typeFilePath) {
-    chunks.push(
-      code`import * as ${config.typeImportName ?? DEFAULT_IMPORT_NAME} from \"${config.typeFilePath}\"\n\n`,
-    );
+    chunks.push(code`import * as ${config.typeImportName ?? DEFAULT_IMPORT_NAME} from \"${config.typeFilePath}\"\n\n`);
   }
 
   // Create a map of interface -> implementing types
@@ -173,9 +171,10 @@ function newFactory(
       ${optionFields.join("\n")}
     }
 
-    export function new${type.name}(options: ${
-    type.name
-  }Options = {}, cache: Record<string, any> = {}): ${maybeImport(config, type.name)} {
+    export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${maybeImport(
+    config,
+    type.name,
+  )} {
       const o = cache["${type.name}"] = {} as ${maybeImport(config, type.name)};
       o.__typename = '${type.name}';
       ${Object.values(type.getFields()).map((f) => {
@@ -372,9 +371,7 @@ function addNextIdMethods(chunks: Code[], config: Config): void {
 }
 
 function maybeImport(config: Config, typeName: string): Import | string {
-  return !!config.typeFilePath
-  ? `${config.typeImportName ?? DEFAULT_IMPORT_NAME}.${typeName}`
-  : typeName;
+  return !!config.typeFilePath ? `${config.typeImportName ?? DEFAULT_IMPORT_NAME}.${typeName}` : typeName;
 }
 
 function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
