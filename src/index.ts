@@ -331,7 +331,7 @@ function getRealEnumForEnumDetailObject(detailObject: GraphQLOutputType): GraphQ
   return unwrapNotNull((unwrapNotNull(detailObject) as GraphQLObjectType).getFields()["code"]!.type) as GraphQLEnumType;
 }
 
-function getRealImportedEnum(config: Config, detailObject: GraphQLOutputType): Import | string {
+function getRealImportedEnum(config: Config, detailObject: GraphQLOutputType): string {
   return maybeImport(config, getRealEnumForEnumDetailObject(detailObject).name);
 }
 
@@ -370,7 +370,7 @@ function addNextIdMethods(chunks: Code[], config: Config): void {
   `);
 }
 
-function maybeImport(config: Config, typeName: string): Import | string {
+function maybeImport(config: Config, typeName: string): string {
   return !!config.typeFilePath ? `${config.typeImportName ?? DEFAULT_IMPORT_NAME}.${typeName}` : typeName;
 }
 
