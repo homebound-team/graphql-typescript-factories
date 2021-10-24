@@ -524,6 +524,7 @@ function enumOrDetailOrNullOfWorking(
   return enumOrDetailOfWorking(enumOrDetail);
 }
 
+const taggedIds: Record<string, string> = { AuthorSummary: "summary" };
 let nextFactoryIds: Record<string, number> = {};
 
 export function resetFactoryIds() {
@@ -533,5 +534,6 @@ export function resetFactoryIds() {
 function nextFactoryId(objectName: string): string {
   const nextId = nextFactoryIds[objectName] || 1;
   nextFactoryIds[objectName] = nextId + 1;
-  return String(nextId);
+  const tag = taggedIds[objectName] ?? objectName.replace(/[a-z]/g, "").toLowerCase();
+  return tag + ":" + nextId;
 }
