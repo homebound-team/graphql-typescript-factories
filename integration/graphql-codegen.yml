@@ -1,7 +1,7 @@
 overwrite: true
 schema: "./integration/schema.graphql"
 generates:
-  integration/graphql-types.ts:
+  integration/graphql-types-and-factories.ts:
     config:
       scalarDefaults:
         Date: "./testData#newDate"

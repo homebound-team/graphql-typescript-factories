@@ -1,0 +1,17 @@
+overwrite: true
+schema: "./integration/schema.graphql"
+config:
+  scalarDefaults:
+    Date: "./testData#newDate"
+  taggedIds:
+    AuthorSummary: "summary"
+generates:
+  integration/graphql-types-only.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+  integration/graphql-type-factories.ts:
+    config:
+      typesFilePath: "./graphql-types-only"
+    plugins:
+      - ./build/index.js
