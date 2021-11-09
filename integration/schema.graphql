@@ -8,6 +8,7 @@ type Author implements Named {
   working: Working
   birthday: Date
   books: [Book!]!
+  bookPopularities: [PopularityDetail!]!
 }
 
 # A DTO that is just some fields
