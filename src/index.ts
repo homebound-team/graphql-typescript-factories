@@ -127,7 +127,10 @@ function newFactory(
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNewFoo` to ensure `__typename` is set, otherwise Apollo breaks.
-    if (fieldType.ofType instanceof GraphQLObjectType) {
+    if (isEnumDetailObject(fieldType.ofType.ofType)) {
+      const enumType = getRealEnumForEnumDetailObject(fieldType.ofType.ofType);
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => enumOrDetailOf${enumType.name}(i));`;
+    } else if (fieldType.ofType instanceof GraphQLObjectType) {
       const objectType = fieldType.ofType.name;
       return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull${objectType}(i, cache));`;
     } else if (fieldType.ofType instanceof GraphQLNonNull && fieldType.ofType.ofType instanceof GraphQLObjectType) {

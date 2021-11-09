@@ -22,6 +22,7 @@ export type Author = Named & {
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
+  bookPopularities: Array<PopularityDetail>;
 };
 
 export type AuthorInput = {
@@ -134,6 +135,7 @@ export interface AuthorOptions {
   working?: Author["working"];
   birthday?: Author["birthday"];
   books?: Array<BookOptions>;
+  bookPopularities?: Array<PopularityDetailOptions>;
 }
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
@@ -147,6 +149,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.working = options.working ?? null;
   o.birthday = options.birthday ?? null;
   o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache, options.hasOwnProperty("books")));
+  o.bookPopularities = (options.bookPopularities ?? []).map((i) => enumOrDetailOfPopularity(i));
   return o;
 }
 
