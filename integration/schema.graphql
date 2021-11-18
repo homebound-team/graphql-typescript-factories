@@ -32,6 +32,14 @@ type BookReview {
   rating: Int!
 }
 
+type SearchResults {
+  # For testing when a type name is not concrete
+  result1: SearchResult
+  result2: Named
+  result3: Author
+}
+
+
 union SearchResult = Author | Book
 
 schema {
