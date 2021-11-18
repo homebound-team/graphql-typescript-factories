@@ -34,6 +34,8 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
     }
   });
 
+  chunks.push(code`const factories: Record<string, Function> = {}`);
+
   generateFactoryFunctions(config, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(config, schema, chunks);
@@ -164,17 +166,17 @@ function newFactory(
     }
   });
 
+  const typeImp = maybeImport(config, type.name);
+
   const factory = code`
     export interface ${type.name}Options {
       __typename?: '${type.name}';
       ${optionFields.join("\n")}
     }
 
-    export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${maybeImport(
-    config,
-    type.name,
-  )} {
-      const o = cache["${type.name}"] = {} as ${maybeImport(config, type.name)};
+    export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${typeImp} {
+      const o = (options.__typename ? options : cache["${type.name}"] = {}) as ${typeImp};
+      (cache.all ??= new Set()).add(o);
       o.__typename = '${type.name}';
       ${Object.values(type.getFields()).map((f) => {
         if (f.type instanceof GraphQLNonNull) {
@@ -206,7 +208,10 @@ function newFactory(
         }
       })}
       return o;
-    }`;
+    }
+  
+    factories["${type.name}"] = new${type.name};
+  `;
 
   const maybeFunctions = code`
 
@@ -214,7 +219,7 @@ function newFactory(
       if (value === undefined) {
         return isSet ? undefined : cache["${type.name}"] || new${type.name}({}, cache)
       } else if (value.__typename) {
-        return value as ${scopedName};
+        return cache.all.has(value) ? value : factories[value.__typename](value, cache);
       } else {
         return new${type.name}(value, cache);
       }
@@ -224,7 +229,7 @@ function newFactory(
       if (!value) {
         return null;
       } else if (value.__typename) {
-        return value as ${scopedName};
+        return cache.all.has(value) ? value : factories[value.__typename](value, cache);
       } else {
         return new${type.name}(value, cache);
       }
