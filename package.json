@@ -9,8 +9,7 @@
     "test": "./node_modules/.bin/jest --watch",
     "coverage": "./node_modules/.bin/jest --collectCoverage",
     "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'",
-    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml",
-    "graphql-codegen-types-separate": "graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
+    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml && graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
   },
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^2.0.0",
