@@ -168,7 +168,7 @@ function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, 
   if (value === undefined) {
     return isSet ? undefined : cache["Author"] || newAuthor({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthor(value, cache);
   }
@@ -178,7 +178,7 @@ function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Re
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthor(value, cache);
   }
@@ -212,7 +212,7 @@ function maybeNewAuthorSummary(
   if (value === undefined) {
     return isSet ? undefined : cache["AuthorSummary"] || newAuthorSummary({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthorSummary(value, cache);
   }
@@ -225,7 +225,7 @@ function maybeNewOrNullAuthorSummary(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthorSummary(value, cache);
   }
@@ -255,7 +255,7 @@ function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>
   if (value === undefined) {
     return isSet ? undefined : cache["Book"] || newBook({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBook(value, cache);
   }
@@ -265,7 +265,7 @@ function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBook(value, cache);
   }
@@ -293,7 +293,7 @@ function maybeNewBookReview(
   if (value === undefined) {
     return isSet ? undefined : cache["BookReview"] || newBookReview({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBookReview(value, cache);
   }
@@ -306,7 +306,7 @@ function maybeNewOrNullBookReview(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBookReview(value, cache);
   }
@@ -339,7 +339,7 @@ function maybeNewCalendarInterval(
   if (value === undefined) {
     return isSet ? undefined : cache["CalendarInterval"] || newCalendarInterval({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newCalendarInterval(value, cache);
   }
@@ -352,7 +352,7 @@ function maybeNewOrNullCalendarInterval(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newCalendarInterval(value, cache);
   }
@@ -376,7 +376,7 @@ function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, an
   if (value === undefined) {
     return isSet ? undefined : cache["Child"] || newChild({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newChild(value, cache);
   }
@@ -386,7 +386,7 @@ function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Reco
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newChild(value, cache);
   }
@@ -437,7 +437,7 @@ function maybeNewSaveAuthorResult(
   if (value === undefined) {
     return isSet ? undefined : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSaveAuthorResult(value, cache);
   }
@@ -450,7 +450,7 @@ function maybeNewOrNullSaveAuthorResult(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSaveAuthorResult(value, cache);
   }
@@ -482,7 +482,7 @@ function maybeNewSearchResults(
   if (value === undefined) {
     return isSet ? undefined : cache["SearchResults"] || newSearchResults({}, cache);
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSearchResults(value, cache);
   }
@@ -495,7 +495,7 @@ function maybeNewOrNullSearchResults(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSearchResults(value, cache);
   }
