@@ -219,7 +219,7 @@ function newFactory(
       if (value === undefined) {
         return isSet ? undefined : cache["${type.name}"] || new${type.name}({}, cache)
       } else if (value.__typename) {
-        return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+        return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
       } else {
         return new${type.name}(value, cache);
       }
@@ -229,7 +229,7 @@ function newFactory(
       if (!value) {
         return null;
       } else if (value.__typename) {
-        return cache.all.has(value) ? value : factories[value.__typename](value, cache);
+        return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
       } else {
         return new${type.name}(value, cache);
       }

@@ -22,6 +22,7 @@ export type Author = Named & {
   working?: Maybe<Working>;
   birthday?: Maybe<Scalars['Date']>;
   books: Array<Book>;
+  bookPopularities: Array<PopularityDetail>;
 };
 
 export type AuthorInput = {
@@ -109,6 +110,13 @@ export type SaveAuthorResult = {
 };
 
 export type SearchResult = Author | Book;
+
+export type SearchResults = {
+  __typename?: 'SearchResults';
+  result1?: Maybe<SearchResult>;
+  result2?: Maybe<Named>;
+  result3?: Maybe<Author>;
+};
 
 export enum Working {
   Yes = 'YES',
