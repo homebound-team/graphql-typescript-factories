@@ -1,21 +1,29 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@1.1.4
+  node: circleci/node@5.0.0
+
+node-image: &node-image
+  image: cimg/node:16.4.0
+  auth:
+    username: $DOCKERHUB_USERNAME
+    password: $DOCKERHUB_ACCESS_TOKEN
 
 workflows:
   version: 2
   workflow:
     jobs:
       - build:
-          context: npm
-          filters:
-            branches:
-              ignore:
-                - main
-      - build:
-          context: npm
-          publish: true
+          context:
+            - npm-readonly
+            - dockerhub
+      - publish:
+          context:
+            - npm-publish
+            - github
+            - dockerhub
+          requires:
+            - build
           filters:
             branches:
               only:
@@ -23,20 +31,24 @@ workflows:
 
 jobs:
   build:
-    parameters:
-      publish:
-        type: boolean
-        default: false
     docker:
-      - image: circleci/node:erbium
+      - <<: *node-image
     working_directory: ~/project
     steps:
       - checkout
-      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc'
-      - run: npm ci
+      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc'
+      - node/install-packages
       - run: npm run build
-      - when:
-          condition: <<parameters.publish>>
-          steps:
-            - run: ./bump.sh package.json
-            - run: npm publish
+      - run: npx --no-install jest
+
+  publish:
+    docker:
+      - <<: *node-image
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc'
+      - node/install-packages
+      - run: npm run build
+      - run: ./bump.sh package.json
+      - run: npm publish
