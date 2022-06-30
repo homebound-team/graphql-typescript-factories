@@ -9,13 +9,14 @@
     "test": "./node_modules/.bin/jest --watch",
     "coverage": "./node_modules/.bin/jest --collectCoverage",
     "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'",
-    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml && graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
+    "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml && graphql-codegen --config ./integration/graphql-codegen-types-separate.yml && graphql-codegen --config ./integration/graphql-codegen-with-enum-mapping.yml"
   },
   "peerDependencies": {
     "graphql": "^15.0.0 || ^16.0.0"
   },
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^2.6.2",
+    "@graphql-codegen/visitor-plugin-common": "^2.6.2",
     "change-case": "^4.1.2",
     "ts-poet": "^5.0.1"
   },

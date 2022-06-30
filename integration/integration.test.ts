@@ -1,29 +1,46 @@
-import { newSearchResults } from "./graphql-types-and-factories";
 import { jan1 } from "./testData";
 
 import * as TypesAndFactories from "./graphql-types-and-factories";
 import * as TypesOnly from "./graphql-types-only";
 import * as FactoriesOnly from "./graphql-type-factories";
+import * as TypesAndFactoriesWithEnumMapping from "./graphql-types-and-factories-with-enum-mapping";
 
-const getTestObjects = (separateTypes: boolean = false) => {
-  if (separateTypes) {
+type TestType = "types-imported" | "types-in-file" | "types-in-file-with-enum-mapping";
+
+type TestObject = {
+  newAuthor: (src?: any) => any;
+  newAuthorSummary: (src?: any) => any;
+  newBook: (src?: any) => any;
+  newCalendarInterval: (src?: any) => any;
+  newChild: (src?: any) => any;
+  Popularity: any,
+  resetFactoryIds: () => void;
+  newSearchResults: (src: any) => any;
+}
+
+const getTestObjects = (testType: TestType): TestObject => {
+  if (testType === 'types-imported') {
     return { ...TypesOnly, ...FactoriesOnly };
-  } else {
+  } else if (testType === 'types-in-file') {
     return TypesAndFactories;
+  } else if (testType === 'types-in-file-with-enum-mapping') {
+    return TypesAndFactoriesWithEnumMapping;
+  } else {
+    throw `Unsupported test type parameter provided: ${testType}`;
   }
 };
 
-const getTests = (testType: "types-imported" | "types-in-file" = "types-in-file") => {
-  let testLabel: string;
-  if (testType === "types-imported") {
-    testLabel = "Types and Factories in separate files";
-  } else {
-    testLabel = "Types and Factories in a shared file";
-  }
+const testLabels: {[key in TestType]: string} = {
+  'types-imported': "Types and Factories in separate files",
+  'types-in-file': "Types and Factories in a shared file",
+  'types-in-file-with-enum-mapping': "Types and Factories in a shared file with enum mapping"
+};
 
-  return describe(testLabel, () => {
-    const { newAuthor, newAuthorSummary, newBook, newCalendarInterval, newChild, Popularity, resetFactoryIds } =
-      getTestObjects(testType === "types-imported");
+const getTests = (testType: TestType = "types-in-file") => {
+  const testLabel = testLabels[testType];
+
+  const runReferenceTests = (
+    { newAuthor, newAuthorSummary, newBook, newCalendarInterval, newChild, Popularity, resetFactoryIds, newSearchResults }: TestObject) => {
 
     it("does not infinite loop", () => {
       const a = newAuthor({});
@@ -111,10 +128,15 @@ const getTests = (testType: "types-imported" | "types-in-file" = "types-in-file"
       // Then the books children have typename set
       expect(sr.result3!.books[0].__typename).toEqual("Book");
     });
+  };
+
+  return describe(testLabel, () => {
+    runReferenceTests(getTestObjects(testType));
   });
 };
 
 describe("typescript-factories", () => {
   getTests("types-in-file");
   getTests("types-imported");
+  getTests("types-in-file-with-enum-mapping")
 });

@@ -1,5 +1,5 @@
 import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
-import { NamingConvention, convertFactory } from "@graphql-codegen/visitor-plugin-common";
+import { convertFactory, NamingConvention, RawConfig } from "@graphql-codegen/visitor-plugin-common";
 import { sentenceCase } from "change-case";
 import {
   GraphQLEnumType,
@@ -306,7 +306,10 @@ function getInitializer(
     // We could potentially make a dummy entry in every list, but would we risk infinite loops between parents/children?
     return `[]`;
   } else if (type instanceof GraphQLEnumType) {
-    return code`${maybeImport(config, type.name)}.${convert(type.getValues()[0].value)}`;
+    const defaultEnumValue = type.getValues()[0];
+    return code`${maybeImport(config, type.name)}.${convertFactory(config)(
+      defaultEnumValue.astNode || defaultEnumValue.value,
+    )}`;
   } else if (type instanceof GraphQLScalarType) {
     if (type.name === "Int") {
       return `0`;
@@ -395,7 +398,7 @@ function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
 }
 
 /** The config values we read from the graphql-codegen.yml file. */
-export type Config = {
+export type Config = RawConfig & {
   scalarDefaults: Record<string, string>;
   taggedIds?: Record<string, string>;
   typesFilePath?: string;
