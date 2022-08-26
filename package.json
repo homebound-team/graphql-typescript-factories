@@ -12,21 +12,20 @@
     "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml && graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
   },
   "dependencies": {
-    "@graphql-codegen/plugin-helpers": "^2.0.0",
-    "change-case": "^4.1.1",
+    "@graphql-codegen/plugin-helpers": "^2.6.2",
+    "change-case": "^4.1.2",
     "graphql": "^15.5.1",
-    "ts-poet": "^4.5.0"
+    "ts-poet": "^5.0.1"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.15.8",
-    "@graphql-codegen/cli": "^2.0.1",
-    "@graphql-codegen/typescript-operations": "^2.0.1",
+    "@graphql-codegen/cli": "^2.11.8",
+    "@graphql-codegen/typescript-operations": "^2.5.3",
     "@types/jest": "^27.0.1",
     "husky": "^3.0.9",
     "jest": "^27.0.6",
-    "prettier": "^2.3.2",
+    "prettier": "^2.7.1",
     "ts-jest": "^27.0.4",
-    "typescript": "^4.3.5"
+    "typescript": "^4.8.2"
   },
   "husky": {
     "hooks": {
