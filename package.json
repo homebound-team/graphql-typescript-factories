@@ -11,16 +11,19 @@
     "format": "prettier --write 'src/**/*.{ts,js,tsx,jsx}'",
     "graphql-codegen": "graphql-codegen --config ./integration/graphql-codegen.yml && graphql-codegen --config ./integration/graphql-codegen-types-separate.yml"
   },
+  "peerDependencies": {
+    "graphql": "^15.0.0 || ^16.0.0"
+  },
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^2.6.2",
     "change-case": "^4.1.2",
-    "graphql": "^15.5.1",
     "ts-poet": "^5.0.1"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^2.11.8",
     "@graphql-codegen/typescript-operations": "^2.5.3",
     "@types/jest": "^27.0.1",
+    "graphql": "^16.6.0",
     "husky": "^3.0.9",
     "jest": "^27.0.6",
     "prettier": "^2.7.1",
