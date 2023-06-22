@@ -35,10 +35,15 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
   chunks.push(code`const factories: Record<string, Function> = {}`);
 
-  generateFactoryFunctions(config, schema, interfaceImpls, chunks);
+  const hasFactories = generateFactoryFunctions(config, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(config, schema, chunks);
   addNextIdMethods(chunks, config);
+
+  if (!hasFactories) {
+    chunks.push(code`// No factories found, make sure your node_modules does not have multiple versions of the 'graphql' library`);
+  }
+
   const content = await code`${chunks}`.toStringWithImports();
   return { content } as PluginOutput;
 };
@@ -48,12 +53,15 @@ function generateFactoryFunctions(
   schema: GraphQLSchema,
   interfaceImpls: Record<string, string[]>,
   chunks: Code[],
-) {
+): boolean {
+  let hasFactories = false;
   Object.values(schema.getTypeMap()).forEach((type) => {
     if (shouldCreateFactory(type)) {
       chunks.push(...newFactory(config, interfaceImpls, type));
+      hasFactories = true;
     }
   });
+  return hasFactories;
 }
 
 function generateInterfaceFactoryFunctions(config: Config, interfaceImpls: Record<string, string[]>, chunks: Code[]) {
