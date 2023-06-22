@@ -1,0 +1,15 @@
+overwrite: true
+schema: "./integration/schema.graphql"
+generates:
+  integration/graphql-types-and-factories-with-enum-mapping.ts:
+    config:
+      namingConvention:
+        enumValues: keep
+      scalarDefaults:
+        Date: "./testData#newDate"
+      taggedIds:
+        AuthorSummary: "summary"
+    plugins:
+      - typescript
+      - typescript-operations
+      - ./build/index.js
