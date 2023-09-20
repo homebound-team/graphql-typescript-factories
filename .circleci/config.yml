@@ -29,15 +29,23 @@ workflows:
               only:
                 - main
 
+commands:
+  bootstrap:
+    steps:
+      - checkout
+      - run: 'echo "npmAuthToken: $NPM_TOKEN" >> ${HOME}/.yarnrc.yml'
+      - node/install-packages:
+          pkg-manager: yarn-berry
+          with-cache: true
+          include-branch-in-cache-key: false
+
 jobs:
   build:
     docker:
       - <<: *node-image
     working_directory: ~/project
     steps:
-      - checkout
-      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc'
-      - node/install-packages
+      - bootstrap
       - run: yarn build
       - run: yarn jest
 
@@ -46,9 +54,7 @@ jobs:
       - <<: *node-image
     working_directory: ~/project
     steps:
-      - checkout
-      - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc'
-      - node/install-packages
+      - bootstrap
       - run: yarn build
       - run: ./bump.sh package.json
       - run: yarn npm publish
