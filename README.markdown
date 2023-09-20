@@ -145,9 +145,9 @@ In order to develop changes for this package, follow these steps:
 
 2. Adjust the example files under the [`integration` directory](/integration) to use your new feature.
 
-3. Run `npm run build`, to create a build with your changes
+3. Run `yarn build`, to create a build with your changes
 
-4. Run `npm run graphql-codegen`, and verify the output
+4. Run `yarn graphql-codegen`, and verify the output
 
 ## Todo
 

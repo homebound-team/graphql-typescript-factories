@@ -41,7 +41,9 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   addNextIdMethods(chunks, config);
 
   if (!hasFactories) {
-    chunks.push(code`// No factories found, make sure your node_modules does not have multiple versions of the 'graphql' library`);
+    chunks.push(
+      code`// No factories found, make sure your node_modules does not have multiple versions of the 'graphql' library`,
+    );
   }
 
   const content = await code`${chunks}`.toStringWithImports();
