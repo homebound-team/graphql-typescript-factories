@@ -3,3 +3,7 @@
 /.idea
 /.circleci
 /jest.config.js
+/package.json.bak
+/bump.sh
+/yarn.lock
+/.yarnrc.yml
