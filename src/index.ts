@@ -46,7 +46,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
     );
   }
 
-  const content = await code`${chunks}`.toStringWithImports();
+  const content = await code`${chunks}`.toString();
   return { content } as PluginOutput;
 };
 
@@ -259,9 +259,9 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
 
     code`
       export type ${interfaceName}Type = ${joinCode(
-      impls.map((type) => maybeImport(config, type)),
-      { on: " | " },
-    )};
+        impls.map((type) => maybeImport(config, type)),
+        { on: " | " },
+      )};
     `,
 
     code`
@@ -280,9 +280,9 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
       }
 
       function maybeNewOrNull${interfaceName}(value: ${interfaceName}Options | undefined | null, cache: Record<string, any>): ${maybeImport(
-      config,
-      interfaceName,
-    )} | null {
+        config,
+        interfaceName,
+      )} | null {
         if (!value) {
           return null;
         } else if (value.__typename) {
