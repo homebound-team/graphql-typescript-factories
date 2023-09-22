@@ -137,23 +137,14 @@ import { newDate } from "./testData";
 const factories: Record<string, Function> = {};
 export interface AuthorOptions {
   __typename?: "Author";
-
   birthday?: Author["birthday"];
-
   bookPopularities?: Array<PopularityDetailOptions>;
-
   books?: Array<BookOptions>;
-
   id?: Author["id"];
-
   name?: Author["name"];
-
   popularity?: PopularityDetailOptions | Popularity;
-
   summary?: AuthorSummaryOptions;
-
   working?: Author["working"];
-
   workingDetail?: WorkingDetailOptions | Working;
 }
 
@@ -196,13 +187,9 @@ function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Re
 }
 export interface AuthorSummaryOptions {
   __typename?: "AuthorSummary";
-
   amountOfSales?: AuthorSummary["amountOfSales"];
-
   author?: AuthorOptions;
-
   id?: AuthorSummary["id"];
-
   numberOfBooks?: AuthorSummary["numberOfBooks"];
 }
 
@@ -247,13 +234,9 @@ function maybeNewOrNullAuthorSummary(
 }
 export interface BookOptions {
   __typename?: "Book";
-
   coauthor?: AuthorOptions | null;
-
   name?: Book["name"];
-
   popularity?: PopularityDetailOptions | Popularity | null;
-
   reviews?: Array<BookReviewOptions | null> | null;
 }
 
@@ -291,7 +274,6 @@ function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record
 }
 export interface BookReviewOptions {
   __typename?: "BookReview";
-
   rating?: BookReview["rating"];
 }
 
@@ -333,9 +315,7 @@ function maybeNewOrNullBookReview(
 }
 export interface CalendarIntervalOptions {
   __typename?: "CalendarInterval";
-
   end?: CalendarInterval["end"];
-
   start?: CalendarInterval["start"];
 }
 
@@ -381,7 +361,6 @@ function maybeNewOrNullCalendarInterval(
 }
 export interface ChildOptions {
   __typename?: "Child";
-
   parent?: Child["parent"];
 }
 
@@ -416,9 +395,7 @@ function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Reco
 }
 export interface PopularityDetailOptions {
   __typename?: "PopularityDetail";
-
   code?: PopularityDetail["code"];
-
   name?: PopularityDetail["name"];
 }
 
@@ -438,7 +415,6 @@ factories["PopularityDetail"] = newPopularityDetail;
 
 export interface SaveAuthorResultOptions {
   __typename?: "SaveAuthorResult";
-
   author?: AuthorOptions;
 }
 
@@ -483,11 +459,8 @@ function maybeNewOrNullSaveAuthorResult(
 }
 export interface SearchResultsOptions {
   __typename?: "SearchResults";
-
   result1?: SearchResults["result1"];
-
   result2?: SearchResults["result2"];
-
   result3?: AuthorOptions | null;
 }
 
@@ -531,11 +504,8 @@ function maybeNewOrNullSearchResults(
 }
 export interface WorkingDetailOptions {
   __typename?: "WorkingDetail";
-
   code?: WorkingDetail["code"];
-
   extraField?: WorkingDetail["extraField"];
-
   name?: WorkingDetail["name"];
 }
 

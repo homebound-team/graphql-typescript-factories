@@ -180,7 +180,7 @@ function newFactory(
   const factory = code`
     export interface ${type.name}Options {
       __typename?: '${type.name}';
-      ${optionFields.join("\n")}
+      ${joinCode(optionFields, { on: "\n" })}
     }
 
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${typeImp} {
