@@ -29,28 +29,17 @@ export interface AuthorOptions {
   workingDetail?: WorkingDetailOptions | Working;
 }
 
-export function newAuthor(
-  options: AuthorOptions = {},
-  cache: Record<string, any> = {},
-): Author {
+export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (options.__typename ? options : cache["Author"] = {}) as Author;
   (cache.all ??= new Set()).add(o);
   o.__typename = "Author";
   o.birthday = options.birthday ?? null;
-  o.bookPopularities = (options.bookPopularities ?? []).map((i) =>
-    enumOrDetailOfPopularity(i)
-  );
-  o.books = (options.books ?? []).map((i) =>
-    maybeNewBook(i, cache, options.hasOwnProperty("books"))
-  );
+  o.bookPopularities = (options.bookPopularities ?? []).map((i) => enumOrDetailOfPopularity(i));
+  o.books = (options.books ?? []).map((i) => maybeNewBook(i, cache, options.hasOwnProperty("books")));
   o.id = options.id ?? nextFactoryId("Author");
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOfPopularity(options.popularity);
-  o.summary = maybeNewAuthorSummary(
-    options.summary,
-    cache,
-    options.hasOwnProperty("summary"),
-  );
+  o.summary = maybeNewAuthorSummary(options.summary, cache, options.hasOwnProperty("summary"));
   o.working = options.working ?? null;
   o.workingDetail = enumOrDetailOfWorking(options.workingDetail);
   return o;
@@ -58,32 +47,21 @@ export function newAuthor(
 
 factories["Author"] = newAuthor;
 
-function maybeNewAuthor(
-  value: AuthorOptions | undefined,
-  cache: Record<string, any>,
-  isSet: boolean = false,
-): Author {
+function maybeNewAuthor(value: AuthorOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Author {
   if (value === undefined) {
     return isSet ? undefined : cache["Author"] || newAuthor({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthor(value, cache);
   }
 }
 
-function maybeNewOrNullAuthor(
-  value: AuthorOptions | undefined | null,
-  cache: Record<string, any>,
-): Author | null {
+function maybeNewOrNullAuthor(value: AuthorOptions | undefined | null, cache: Record<string, any>): Author | null {
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthor(value, cache);
   }
@@ -96,22 +74,12 @@ export interface AuthorSummaryOptions {
   numberOfBooks?: AuthorSummary["numberOfBooks"];
 }
 
-export function newAuthorSummary(
-  options: AuthorSummaryOptions = {},
-  cache: Record<string, any> = {},
-): AuthorSummary {
-  const o =
-    (options.__typename
-      ? options
-      : cache["AuthorSummary"] = {}) as AuthorSummary;
+export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
+  const o = (options.__typename ? options : cache["AuthorSummary"] = {}) as AuthorSummary;
   (cache.all ??= new Set()).add(o);
   o.__typename = "AuthorSummary";
   o.amountOfSales = options.amountOfSales ?? null;
-  o.author = maybeNewAuthor(
-    options.author,
-    cache,
-    options.hasOwnProperty("author"),
-  );
+  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
   o.id = options.id ?? nextFactoryId("AuthorSummary");
   o.numberOfBooks = options.numberOfBooks ?? 0;
   return o;
@@ -125,13 +93,9 @@ function maybeNewAuthorSummary(
   isSet: boolean = false,
 ): AuthorSummary {
   if (value === undefined) {
-    return isSet
-      ? undefined
-      : cache["AuthorSummary"] || newAuthorSummary({}, cache);
+    return isSet ? undefined : cache["AuthorSummary"] || newAuthorSummary({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthorSummary(value, cache);
   }
@@ -144,9 +108,7 @@ function maybeNewOrNullAuthorSummary(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newAuthorSummary(value, cache);
   }
@@ -159,50 +121,34 @@ export interface BookOptions {
   reviews?: Array<BookReviewOptions | null> | null;
 }
 
-export function newBook(
-  options: BookOptions = {},
-  cache: Record<string, any> = {},
-): Book {
+export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (options.__typename ? options : cache["Book"] = {}) as Book;
   (cache.all ??= new Set()).add(o);
   o.__typename = "Book";
   o.coauthor = maybeNewOrNullAuthor(options.coauthor, cache);
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
-  o.reviews = (options.reviews ?? []).map((i) =>
-    maybeNewOrNullBookReview(i, cache)
-  );
+  o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
   return o;
 }
 
 factories["Book"] = newBook;
 
-function maybeNewBook(
-  value: BookOptions | undefined,
-  cache: Record<string, any>,
-  isSet: boolean = false,
-): Book {
+function maybeNewBook(value: BookOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Book {
   if (value === undefined) {
     return isSet ? undefined : cache["Book"] || newBook({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBook(value, cache);
   }
 }
 
-function maybeNewOrNullBook(
-  value: BookOptions | undefined | null,
-  cache: Record<string, any>,
-): Book | null {
+function maybeNewOrNullBook(value: BookOptions | undefined | null, cache: Record<string, any>): Book | null {
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBook(value, cache);
   }
@@ -212,12 +158,8 @@ export interface BookReviewOptions {
   rating?: BookReview["rating"];
 }
 
-export function newBookReview(
-  options: BookReviewOptions = {},
-  cache: Record<string, any> = {},
-): BookReview {
-  const o =
-    (options.__typename ? options : cache["BookReview"] = {}) as BookReview;
+export function newBookReview(options: BookReviewOptions = {}, cache: Record<string, any> = {}): BookReview {
+  const o = (options.__typename ? options : cache["BookReview"] = {}) as BookReview;
   (cache.all ??= new Set()).add(o);
   o.__typename = "BookReview";
   o.rating = options.rating ?? 0;
@@ -234,9 +176,7 @@ function maybeNewBookReview(
   if (value === undefined) {
     return isSet ? undefined : cache["BookReview"] || newBookReview({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBookReview(value, cache);
   }
@@ -249,9 +189,7 @@ function maybeNewOrNullBookReview(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newBookReview(value, cache);
   }
@@ -266,10 +204,7 @@ export function newCalendarInterval(
   options: CalendarIntervalOptions = {},
   cache: Record<string, any> = {},
 ): CalendarInterval {
-  const o =
-    (options.__typename
-      ? options
-      : cache["CalendarInterval"] = {}) as CalendarInterval;
+  const o = (options.__typename ? options : cache["CalendarInterval"] = {}) as CalendarInterval;
   (cache.all ??= new Set()).add(o);
   o.__typename = "CalendarInterval";
   o.end = options.end ?? newDate();
@@ -285,13 +220,9 @@ function maybeNewCalendarInterval(
   isSet: boolean = false,
 ): CalendarInterval {
   if (value === undefined) {
-    return isSet
-      ? undefined
-      : cache["CalendarInterval"] || newCalendarInterval({}, cache);
+    return isSet ? undefined : cache["CalendarInterval"] || newCalendarInterval({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newCalendarInterval(value, cache);
   }
@@ -304,9 +235,7 @@ function maybeNewOrNullCalendarInterval(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newCalendarInterval(value, cache);
   }
@@ -316,49 +245,31 @@ export interface ChildOptions {
   parent?: Child["parent"];
 }
 
-export function newChild(
-  options: ChildOptions = {},
-  cache: Record<string, any> = {},
-): Child {
+export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
   const o = (options.__typename ? options : cache["Child"] = {}) as Child;
   (cache.all ??= new Set()).add(o);
   o.__typename = "Child";
-  o.parent = maybeNewAuthor(
-    options.parent,
-    cache,
-    options.hasOwnProperty("parent"),
-  );
+  o.parent = maybeNewAuthor(options.parent, cache, options.hasOwnProperty("parent"));
   return o;
 }
 
 factories["Child"] = newChild;
 
-function maybeNewChild(
-  value: ChildOptions | undefined,
-  cache: Record<string, any>,
-  isSet: boolean = false,
-): Child {
+function maybeNewChild(value: ChildOptions | undefined, cache: Record<string, any>, isSet: boolean = false): Child {
   if (value === undefined) {
     return isSet ? undefined : cache["Child"] || newChild({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newChild(value, cache);
   }
 }
 
-function maybeNewOrNullChild(
-  value: ChildOptions | undefined | null,
-  cache: Record<string, any>,
-): Child | null {
+function maybeNewOrNullChild(value: ChildOptions | undefined | null, cache: Record<string, any>): Child | null {
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newChild(value, cache);
   }
@@ -373,10 +284,7 @@ export function newPopularityDetail(
   options: PopularityDetailOptions = {},
   cache: Record<string, any> = {},
 ): PopularityDetail {
-  const o =
-    (options.__typename
-      ? options
-      : cache["PopularityDetail"] = {}) as PopularityDetail;
+  const o = (options.__typename ? options : cache["PopularityDetail"] = {}) as PopularityDetail;
   (cache.all ??= new Set()).add(o);
   o.__typename = "PopularityDetail";
   o.code = options.code ?? Popularity.High;
@@ -395,17 +303,10 @@ export function newSaveAuthorResult(
   options: SaveAuthorResultOptions = {},
   cache: Record<string, any> = {},
 ): SaveAuthorResult {
-  const o =
-    (options.__typename
-      ? options
-      : cache["SaveAuthorResult"] = {}) as SaveAuthorResult;
+  const o = (options.__typename ? options : cache["SaveAuthorResult"] = {}) as SaveAuthorResult;
   (cache.all ??= new Set()).add(o);
   o.__typename = "SaveAuthorResult";
-  o.author = maybeNewAuthor(
-    options.author,
-    cache,
-    options.hasOwnProperty("author"),
-  );
+  o.author = maybeNewAuthor(options.author, cache, options.hasOwnProperty("author"));
   return o;
 }
 
@@ -417,13 +318,9 @@ function maybeNewSaveAuthorResult(
   isSet: boolean = false,
 ): SaveAuthorResult {
   if (value === undefined) {
-    return isSet
-      ? undefined
-      : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
+    return isSet ? undefined : cache["SaveAuthorResult"] || newSaveAuthorResult({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSaveAuthorResult(value, cache);
   }
@@ -436,9 +333,7 @@ function maybeNewOrNullSaveAuthorResult(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSaveAuthorResult(value, cache);
   }
@@ -450,14 +345,8 @@ export interface SearchResultsOptions {
   result3?: AuthorOptions | null;
 }
 
-export function newSearchResults(
-  options: SearchResultsOptions = {},
-  cache: Record<string, any> = {},
-): SearchResults {
-  const o =
-    (options.__typename
-      ? options
-      : cache["SearchResults"] = {}) as SearchResults;
+export function newSearchResults(options: SearchResultsOptions = {}, cache: Record<string, any> = {}): SearchResults {
+  const o = (options.__typename ? options : cache["SearchResults"] = {}) as SearchResults;
   (cache.all ??= new Set()).add(o);
   o.__typename = "SearchResults";
   o.result1 = options.result1 ?? null;
@@ -474,13 +363,9 @@ function maybeNewSearchResults(
   isSet: boolean = false,
 ): SearchResults {
   if (value === undefined) {
-    return isSet
-      ? undefined
-      : cache["SearchResults"] || newSearchResults({}, cache);
+    return isSet ? undefined : cache["SearchResults"] || newSearchResults({}, cache);
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSearchResults(value, cache);
   }
@@ -493,9 +378,7 @@ function maybeNewOrNullSearchResults(
   if (!value) {
     return null;
   } else if (value.__typename) {
-    return cache.all?.has(value)
-      ? value
-      : factories[value.__typename](value, cache);
+    return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
   } else {
     return newSearchResults(value, cache);
   }
@@ -507,14 +390,8 @@ export interface WorkingDetailOptions {
   name?: WorkingDetail["name"];
 }
 
-export function newWorkingDetail(
-  options: WorkingDetailOptions = {},
-  cache: Record<string, any> = {},
-): WorkingDetail {
-  const o =
-    (options.__typename
-      ? options
-      : cache["WorkingDetail"] = {}) as WorkingDetail;
+export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
+  const o = (options.__typename ? options : cache["WorkingDetail"] = {}) as WorkingDetail;
   (cache.all ??= new Set()).add(o);
   o.__typename = "WorkingDetail";
   o.code = options.code ?? Working.No;
@@ -525,19 +402,13 @@ export function newWorkingDetail(
 
 factories["WorkingDetail"] = newWorkingDetail;
 
-export type NamedOptions =
-  | AuthorOptions
-  | BookOptions
-  | PopularityDetailOptions;
+export type NamedOptions = AuthorOptions | BookOptions | PopularityDetailOptions;
 
 export type NamedType = Author | Book | PopularityDetail;
 
 export type NamedTypeName = "Author" | "Book" | "PopularityDetail";
 
-function maybeNewNamed(
-  value: NamedOptions | undefined,
-  cache: Record<string, any>,
-): NamedType {
+function maybeNewNamed(value: NamedOptions | undefined, cache: Record<string, any>): NamedType {
   if (value === undefined) {
     return cache["Author"] || newAuthor({}, cache);
   } else if (value.__typename) {
@@ -547,10 +418,7 @@ function maybeNewNamed(
   }
 }
 
-function maybeNewOrNullNamed(
-  value: NamedOptions | undefined | null,
-  cache: Record<string, any>,
-): Named | null {
+function maybeNewOrNullNamed(value: NamedOptions | undefined | null, cache: Record<string, any>): Named | null {
   if (!value) {
     return null;
   } else if (value.__typename) {
@@ -560,14 +428,9 @@ function maybeNewOrNullNamed(
   }
 }
 
-const enumDetailNameOfPopularity = {
-  High: "High",
-  Low: "Low",
-};
+const enumDetailNameOfPopularity = { High: "High", Low: "Low" };
 
-function enumOrDetailOfPopularity(
-  enumOrDetail: PopularityDetailOptions | Popularity | undefined,
-): PopularityDetail {
+function enumOrDetailOfPopularity(enumOrDetail: PopularityDetailOptions | Popularity | undefined): PopularityDetail {
   if (enumOrDetail === undefined) {
     return newPopularityDetail();
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
@@ -594,14 +457,9 @@ function enumOrDetailOrNullOfPopularity(
   return enumOrDetailOfPopularity(enumOrDetail);
 }
 
-const enumDetailNameOfWorking = {
-  NO: "No",
-  YES: "Yes",
-};
+const enumDetailNameOfWorking = { NO: "No", YES: "Yes" };
 
-function enumOrDetailOfWorking(
-  enumOrDetail: WorkingDetailOptions | Working | undefined,
-): WorkingDetail {
+function enumOrDetailOfWorking(enumOrDetail: WorkingDetailOptions | Working | undefined): WorkingDetail {
   if (enumOrDetail === undefined) {
     return newWorkingDetail();
   } else if (typeof enumOrDetail === "object" && "code" in enumOrDetail) {
@@ -612,10 +470,7 @@ function enumOrDetailOfWorking(
       ...enumOrDetail,
     } as WorkingDetail;
   } else {
-    return newWorkingDetail({
-      code: enumOrDetail as Working,
-      name: enumDetailNameOfWorking[enumOrDetail as Working],
-    });
+    return newWorkingDetail({ code: enumOrDetail as Working, name: enumDetailNameOfWorking[enumOrDetail as Working] });
   }
 }
 
@@ -638,7 +493,6 @@ export function resetFactoryIds() {
 function nextFactoryId(objectName: string): string {
   const nextId = nextFactoryIds[objectName] || 1;
   nextFactoryIds[objectName] = nextId + 1;
-  const tag = taggedIds[objectName] ??
-    objectName.replace(/[a-z]/g, "").toLowerCase();
+  const tag = taggedIds[objectName] ?? objectName.replace(/[a-z]/g, "").toLowerCase();
   return tag + ":" + nextId;
 }

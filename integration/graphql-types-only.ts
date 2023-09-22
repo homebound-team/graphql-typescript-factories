@@ -3,23 +3,25 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
-  Date: any;
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  Date: { input: any; output: any; }
 };
 
 export type Author = Named & {
   __typename?: 'Author';
-  birthday?: Maybe<Scalars['Date']>;
+  birthday?: Maybe<Scalars['Date']['output']>;
   bookPopularities: Array<PopularityDetail>;
   books: Array<Book>;
-  id: Scalars['ID'];
-  name: Scalars['String'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
   popularity: PopularityDetail;
   summary: AuthorSummary;
   working?: Maybe<Working>;
@@ -27,34 +29,34 @@ export type Author = Named & {
 };
 
 export type AuthorInput = {
-  name?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AuthorSummary = {
   __typename?: 'AuthorSummary';
-  amountOfSales?: Maybe<Scalars['Float']>;
+  amountOfSales?: Maybe<Scalars['Float']['output']>;
   author: Author;
-  id: Scalars['ID'];
-  numberOfBooks: Scalars['Int'];
+  id: Scalars['ID']['output'];
+  numberOfBooks: Scalars['Int']['output'];
 };
 
 export type Book = Named & {
   __typename?: 'Book';
   coauthor?: Maybe<Author>;
-  name: Scalars['String'];
+  name: Scalars['String']['output'];
   popularity?: Maybe<PopularityDetail>;
   reviews?: Maybe<Array<Maybe<BookReview>>>;
 };
 
 export type BookReview = {
   __typename?: 'BookReview';
-  rating: Scalars['Int'];
+  rating: Scalars['Int']['output'];
 };
 
 export type CalendarInterval = {
   __typename?: 'CalendarInterval';
-  end: Scalars['Date'];
-  start: Scalars['Date'];
+  end: Scalars['Date']['output'];
+  start: Scalars['Date']['output'];
 };
 
 export type Child = {
@@ -73,7 +75,7 @@ export type MutationSaveAuthorArgs = {
 };
 
 export type Named = {
-  name: Scalars['String'];
+  name: Scalars['String']['output'];
 };
 
 export enum Popularity {
@@ -84,7 +86,7 @@ export enum Popularity {
 export type PopularityDetail = Named & {
   __typename?: 'PopularityDetail';
   code: Popularity;
-  name: Scalars['String'];
+  name: Scalars['String']['output'];
 };
 
 export type Query = {
@@ -96,12 +98,12 @@ export type Query = {
 
 
 export type QueryAuthorsArgs = {
-  id?: InputMaybe<Scalars['ID']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
 export type QuerySearchArgs = {
-  query: Scalars['String'];
+  query: Scalars['String']['input'];
 };
 
 export type SaveAuthorResult = {
@@ -126,6 +128,6 @@ export enum Working {
 export type WorkingDetail = {
   __typename?: 'WorkingDetail';
   code: Working;
-  extraField: Scalars['Int'];
-  name: Scalars['String'];
+  extraField: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
 };
