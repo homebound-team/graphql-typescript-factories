@@ -46,12 +46,19 @@ export type Book = Named & {
   name: Scalars['String']['output'];
   popularity?: Maybe<PopularityDetail>;
   reviews?: Maybe<Array<Maybe<BookReview>>>;
+  status: BookStatus;
 };
 
 export type BookReview = {
   __typename?: 'BookReview';
   rating: Scalars['Int']['output'];
 };
+
+export enum BookStatus {
+  InProgress = 'IN_PROGRESS',
+  NotStarted = 'NOT_STARTED',
+  OnHold = 'ON_HOLD'
+}
 
 export type CalendarInterval = {
   __typename?: 'CalendarInterval';
@@ -238,6 +245,7 @@ export interface BookOptions {
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity | null;
   reviews?: Array<BookReviewOptions | null> | null;
+  status?: Book["status"];
 }
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
@@ -248,6 +256,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
+  o.status = options.status ?? BookStatus.InProgress;
   return o;
 }
 

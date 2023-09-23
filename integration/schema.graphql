@@ -27,6 +27,8 @@ type Book implements Named {
   coauthor: Author
   # Purposefully use [...]-no-bang as a boundary case
   reviews: [BookReview]
+  # Example of an enum with underscores in the values
+  status: BookStatus!
 }
 
 type BookReview {
@@ -91,6 +93,12 @@ type WorkingDetail {
 enum Working {
   YES
   NO
+}
+
+enum BookStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ON_HOLD
 }
 
 scalar Date

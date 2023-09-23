@@ -13,35 +13,42 @@ type TestObject = {
   newBook: (src?: any) => any;
   newCalendarInterval: (src?: any) => any;
   newChild: (src?: any) => any;
-  Popularity: any,
+  Popularity: any;
   resetFactoryIds: () => void;
   newSearchResults: (src: any) => any;
-}
+};
 
 const getTestObjects = (testType: TestType): TestObject => {
-  if (testType === 'types-imported') {
+  if (testType === "types-imported") {
     return { ...TypesOnly, ...FactoriesOnly };
-  } else if (testType === 'types-in-file') {
+  } else if (testType === "types-in-file") {
     return TypesAndFactories;
-  } else if (testType === 'types-in-file-with-enum-mapping') {
+  } else if (testType === "types-in-file-with-enum-mapping") {
     return TypesAndFactoriesWithEnumMapping;
   } else {
     throw `Unsupported test type parameter provided: ${testType}`;
   }
 };
 
-const testLabels: {[key in TestType]: string} = {
-  'types-imported': "Types and Factories in separate files",
-  'types-in-file': "Types and Factories in a shared file",
-  'types-in-file-with-enum-mapping': "Types and Factories in a shared file with enum mapping"
+const testLabels: { [key in TestType]: string } = {
+  "types-imported": "Types and Factories in separate files",
+  "types-in-file": "Types and Factories in a shared file",
+  "types-in-file-with-enum-mapping": "Types and Factories in a shared file with enum mapping",
 };
 
 const getTests = (testType: TestType = "types-in-file") => {
   const testLabel = testLabels[testType];
 
-  const runReferenceTests = (
-    { newAuthor, newAuthorSummary, newBook, newCalendarInterval, newChild, Popularity, resetFactoryIds, newSearchResults }: TestObject) => {
-
+  const runReferenceTests = ({
+    newAuthor,
+    newAuthorSummary,
+    newBook,
+    newCalendarInterval,
+    newChild,
+    Popularity,
+    resetFactoryIds,
+    newSearchResults,
+  }: TestObject) => {
     it("does not infinite loop", () => {
       const a = newAuthor({});
       expect(a.name).toEqual("name");
@@ -138,5 +145,23 @@ const getTests = (testType: TestType = "types-in-file") => {
 describe("typescript-factories", () => {
   getTests("types-in-file");
   getTests("types-imported");
-  getTests("types-in-file-with-enum-mapping")
+  getTests("types-in-file-with-enum-mapping");
+});
+
+describe("enum mapping", () => {
+  it("defaults to pascal case", () => {
+    // Given the value of BookStatus.InProgress is pascal cased
+    const ip = TypesAndFactories.BookStatus.InProgress;
+    // Then our factory uses it
+    const b = TypesAndFactories.newBook();
+    expect(b.status).toEqual(ip);
+  });
+
+  it("respects enumValues=keep", () => {
+    // Given the value of Working.NO is kept upper-cased
+    const no = TypesAndFactoriesWithEnumMapping.Working.NO;
+    // Then our factory uses it
+    const wd = TypesAndFactoriesWithEnumMapping.newWorkingDetail();
+    expect(wd.code).toEqual(no);
+  });
 });

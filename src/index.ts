@@ -1,5 +1,5 @@
 import { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
-import { convertFactory, NamingConvention, RawConfig } from "@graphql-codegen/visitor-plugin-common";
+import { convertFactory, ConvertFn, NamingConvention, RawConfig } from "@graphql-codegen/visitor-plugin-common";
 import { sentenceCase } from "change-case";
 import {
   GraphQLEnumType,
@@ -18,6 +18,8 @@ import PluginOutput = Types.PluginOutput;
 
 /** Generates `newProject({ ... })` factory functions in our `graphql-types` codegen output. */
 export const plugin: PluginFunction = async (schema, documents, config: Config) => {
+  const convert = convertFactory(config);
+
   const chunks: Code[] = [];
 
   // Create a map of interface -> implementing types
@@ -35,7 +37,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
   chunks.push(code`const factories: Record<string, Function> = {}`);
 
-  const hasFactories = generateFactoryFunctions(config, schema, interfaceImpls, chunks);
+  const hasFactories = generateFactoryFunctions(config, convert, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
   generateEnumDetailHelperFunctions(config, schema, chunks);
   addNextIdMethods(chunks, config);
@@ -52,6 +54,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
 
 function generateFactoryFunctions(
   config: Config,
+  convertFn: ConvertFn,
   schema: GraphQLSchema,
   interfaceImpls: Record<string, string[]>,
   chunks: Code[],
@@ -59,7 +62,7 @@ function generateFactoryFunctions(
   let hasFactories = false;
   Object.values(schema.getTypeMap()).forEach((type) => {
     if (shouldCreateFactory(type)) {
-      chunks.push(...newFactory(config, interfaceImpls, type));
+      chunks.push(...newFactory(config, convertFn, interfaceImpls, type));
       hasFactories = true;
     }
   });
@@ -129,6 +132,7 @@ function generateEnumDetailHelperFunctions(config: Config, schema: GraphQLSchema
 /** Creates a `new${type}` function for the given `type`. */
 function newFactory(
   config: Config,
+  convertFn: ConvertFn,
   interfaceImpls: Record<string, string[]>,
   type: GraphQLObjectType,
   addImportNamePrefix?: boolean,
@@ -202,7 +206,7 @@ function newFactory(
             const implTypeName = interfaceImpls[fieldType.name][0] || fail();
             return `o.${f.name} = maybeNew${implTypeName}(options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
           } else {
-            return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, type, f, fieldType)};`;
+            return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, convertFn, type, f, fieldType)};`;
           }
         } else if (f.type instanceof GraphQLObjectType) {
           if (isEnumDetailObject(f.type)) {
@@ -298,20 +302,25 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
 /** Returns a default value for the given field's type, i.e. strings are "", ints are 0, arrays are []. */
 function getInitializer(
   config: Config,
+  convertFn: ConvertFn,
   object: GraphQLObjectType,
   field: GraphQLField<any, any, any>,
   type: GraphQLOutputType,
 ): string | Code {
-  const convert = convertFactory(config);
-
   if (type instanceof GraphQLList) {
     // We could potentially make a dummy entry in every list, but would we risk infinite loops between parents/children?
     return `[]`;
   } else if (type instanceof GraphQLEnumType) {
     const defaultEnumValue = type.getValues()[0];
-    return code`${maybeImport(config, type.name)}.${convertFactory(config)(
-      defaultEnumValue.astNode || defaultEnumValue.value,
-    )}`;
+    // The default behavior of graphql-codegen is that enums do drop underscores, but
+    // type names don't; emulate that by passing `transformUnderscore` here. If the user
+    // _does_ have it overridden in their config, then that causes enums & types to be
+    // treated exactly the same.
+    //
+    // Todo: we should also check `ignoreEnumValuesFromSchema` and `enumValues` in the config:
+    // https://github.com/dotansimha/graphql-code-generator/blob/master/packages/plugins/other/visitor-plugin-common/src/base-types-visitor.ts#L921
+    const name = convertFn(defaultEnumValue.astNode || defaultEnumValue.value, { transformUnderscore: true });
+    return code`${maybeImport(config, type.name)}.${name}`;
   } else if (type instanceof GraphQLScalarType) {
     if (type.name === "Int") {
       return `0`;
