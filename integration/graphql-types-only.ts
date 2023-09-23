@@ -46,12 +46,19 @@ export type Book = Named & {
   name: Scalars['String']['output'];
   popularity?: Maybe<PopularityDetail>;
   reviews?: Maybe<Array<Maybe<BookReview>>>;
+  status: BookStatus;
 };
 
 export type BookReview = {
   __typename?: 'BookReview';
   rating: Scalars['Int']['output'];
 };
+
+export enum BookStatus {
+  InProgress = 'IN_PROGRESS',
+  NotStarted = 'NOT_STARTED',
+  OnHold = 'ON_HOLD'
+}
 
 export type CalendarInterval = {
   __typename?: 'CalendarInterval';

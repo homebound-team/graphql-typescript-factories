@@ -3,6 +3,7 @@ import {
   AuthorSummary,
   Book,
   BookReview,
+  BookStatus,
   CalendarInterval,
   Child,
   Named,
@@ -119,6 +120,7 @@ export interface BookOptions {
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity | null;
   reviews?: Array<BookReviewOptions | null> | null;
+  status?: Book["status"];
 }
 
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
@@ -129,6 +131,7 @@ export function newBook(options: BookOptions = {}, cache: Record<string, any> = 
   o.name = options.name ?? "name";
   o.popularity = enumOrDetailOrNullOfPopularity(options.popularity);
   o.reviews = (options.reviews ?? []).map((i) => maybeNewOrNullBookReview(i, cache));
+  o.status = options.status ?? BookStatus.InProgress;
   return o;
 }
 
