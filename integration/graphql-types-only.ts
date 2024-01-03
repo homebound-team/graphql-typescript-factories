@@ -25,7 +25,7 @@ export type Author = Named & {
   popularity: PopularityDetail;
   summary: AuthorSummary;
   working?: Maybe<Working>;
-  workingDetail: WorkingDetail;
+  workingDetail: Array<WorkingDetail>;
 };
 
 export type AuthorInput = {

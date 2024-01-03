@@ -27,7 +27,7 @@ export interface AuthorOptions {
   popularity?: PopularityDetailOptions | Popularity;
   summary?: AuthorSummaryOptions;
   working?: Author["working"];
-  workingDetail?: WorkingDetailOptions | Working;
+  workingDetail?: Array<WorkingDetailOptions>;
 }
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
@@ -42,7 +42,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   o.popularity = enumOrDetailOfPopularity(options.popularity);
   o.summary = maybeNewAuthorSummary(options.summary, cache, options.hasOwnProperty("summary"));
   o.working = options.working ?? null;
-  o.workingDetail = enumOrDetailOfWorking(options.workingDetail);
+  o.workingDetail = (options.workingDetail ?? []).map((i) => enumOrDetailOfWorking(i));
   return o;
 }
 

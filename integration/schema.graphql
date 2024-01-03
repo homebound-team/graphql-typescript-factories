@@ -4,7 +4,8 @@ type Author implements Named {
   name: String!
   summary: AuthorSummary!
   popularity: PopularityDetail!
-  workingDetail: WorkingDetail!
+   # Example of a detail that a) has an extra field and b) is only referenced from a list
+  workingDetail: [WorkingDetail!]!
   working: Working
   birthday: Date
   books: [Book!]!

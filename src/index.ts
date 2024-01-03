@@ -82,7 +82,7 @@ function generateEnumDetailHelperFunctions(config: Config, schema: GraphQLSchema
       .filter(shouldCreateFactory)
       .flatMap((type) => {
         return Object.values(type.getFields())
-          .map((f) => unwrapNotNull(f.type))
+          .map((f) => unwrapNullsAndLists(f.type))
           .filter(isEnumDetailObject);
       }),
   );
@@ -371,6 +371,20 @@ function unwrapNotNull(type: GraphQLOutputType): GraphQLOutputType {
   } else {
     return type;
   }
+}
+
+/** Unwrap `Foo!` -> `Foo` and `[Foo!]!` -> `Foo`. */
+function unwrapNullsAndLists(type: GraphQLOutputType): GraphQLOutputType {
+  if (type instanceof GraphQLNonNull) {
+    type = type.ofType;
+  }
+  if (type instanceof GraphQLList) {
+    type = type.ofType;
+  }
+  if (type instanceof GraphQLNonNull) {
+    type = type.ofType;
+  }
+  return type;
 }
 
 function shouldCreateFactory(type: GraphQLNamedType): type is GraphQLObjectType {
