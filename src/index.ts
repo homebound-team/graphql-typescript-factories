@@ -167,10 +167,12 @@ function newFactory(
     } else if (fieldType instanceof GraphQLObjectType) {
       return code`${f.name}?: ${fieldType.name}Options${orNull};`;
     } else if (fieldType instanceof GraphQLList) {
-      const elementOrNull = fieldType.ofType instanceof GraphQLNonNull ? "" : " | null";
       const elementType = maybeDenull(fieldType.ofType);
       if (elementType instanceof GraphQLObjectType) {
-        return code`${f.name}?: Array<${elementType.name}Options${elementOrNull}>${orNull};`;
+        const isNonNull = fieldType.ofType instanceof GraphQLNonNull;
+        const optionsType = code`${elementType.name}Options`;
+        const maybeMaybeOptionsType = isNonNull ? optionsType : code`${maybeImport(config, "Maybe")}<${optionsType}>`;
+        return code`${f.name}?: Array<${maybeMaybeOptionsType}>${orNull};`;
       } else {
         return code`${f.name}?: ${scopedName}["${f.name}"]${orNull};`;
       }

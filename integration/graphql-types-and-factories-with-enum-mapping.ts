@@ -244,7 +244,7 @@ export interface BookOptions {
   coauthor?: AuthorOptions | null;
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity | null;
-  reviews?: Array<BookReviewOptions | null> | null;
+  reviews?: Array<Maybe<BookReviewOptions>> | null;
   status?: Book["status"];
 }
 
