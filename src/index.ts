@@ -339,7 +339,7 @@ function getInitializer(
     } else if (type.name === "ID") {
       return `nextFactoryId("${object.name}")`;
     }
-    const defaultFromConfig = config.scalarDefaults[type.name];
+    const defaultFromConfig = config.scalarDefaults?.[type.name];
     if (defaultFromConfig) {
       return code`${toImp(defaultFromConfig)}()`;
     }
@@ -426,7 +426,7 @@ function maybeDenull(o: GraphQLOutputType): GraphQLOutputType {
 
 /** The config values we read from the graphql-codegen.yml file. */
 export type Config = RawConfig & {
-  scalarDefaults: Record<string, string>;
+  scalarDefaults?: Record<string, string>;
   taggedIds?: Record<string, string>;
   typesFilePath?: string;
   namingConvention?: NamingConvention;
