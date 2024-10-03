@@ -142,10 +142,13 @@ function newFactory(
     if (isEnumDetailObject(fieldType.ofType.ofType)) {
       const enumType = getRealEnumForEnumDetailObject(fieldType.ofType.ofType);
       return `o.${f.name} = (options.${f.name} ?? []).map(i => enumOrDetailOf${enumType.name}(i));`;
-    } else if (fieldType.ofType instanceof GraphQLObjectType) {
+    } else if (fieldType.ofType instanceof GraphQLObjectType || fieldType.ofType instanceof GraphQLInterfaceType) {
       const objectType = fieldType.ofType.name;
       return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull("${objectType}", i, cache));`;
-    } else if (fieldType.ofType instanceof GraphQLNonNull && fieldType.ofType.ofType instanceof GraphQLObjectType) {
+    } else if (
+      fieldType.ofType instanceof GraphQLNonNull &&
+      (fieldType.ofType.ofType instanceof GraphQLObjectType || fieldType.ofType.ofType instanceof GraphQLInterfaceType)
+    ) {
       const objectType = fieldType.ofType.ofType.name;
       return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew("${objectType}", i, cache, options.hasOwnProperty("${f.name}")));`;
     } else {
@@ -161,11 +164,11 @@ function newFactory(
 
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
       return code`${f.name}?: ${fieldType.name}Options | ${getRealImportedEnum(config, fieldType)}${orNull};`;
-    } else if (fieldType instanceof GraphQLObjectType) {
+    } else if (fieldType instanceof GraphQLObjectType || fieldType instanceof GraphQLInterfaceType) {
       return code`${f.name}?: ${fieldType.name}Options${orNull};`;
     } else if (fieldType instanceof GraphQLList) {
       const elementType = maybeDenull(fieldType.ofType);
-      if (elementType instanceof GraphQLObjectType) {
+      if (elementType instanceof GraphQLObjectType || elementType instanceof GraphQLInterfaceType) {
         const isNonNull = fieldType.ofType instanceof GraphQLNonNull;
         const optionsType = code`${elementType.name}Options`;
         const maybeMaybeOptionsType = isNonNull ? optionsType : code`${maybeImport(config, "Maybe")}<${optionsType}>`;
@@ -208,6 +211,12 @@ function newFactory(
             return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, convertFn, type, f, fieldType)};`;
           }
         } else if (f.type instanceof GraphQLObjectType) {
+          if (isEnumDetailObject(f.type)) {
+            const enumType = getRealEnumForEnumDetailObject(f.type);
+            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
+          }
+          return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
+        } else if (f.type instanceof GraphQLInterfaceType) {
           if (isEnumDetailObject(f.type)) {
             const enumType = getRealEnumForEnumDetailObject(f.type);
             return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;

@@ -108,7 +108,13 @@ interface Named {
   name: String!
 }
 
-type Child {
+type Parent implements Named {
+  name: String!
+  children: [Named!]!
+}
+
+type Child implements Named {
+  name: String!
   # For testing newChild() picks newAuthor
   parent: Named!
 }

@@ -66,8 +66,9 @@ export type CalendarInterval = {
   start: Scalars['Date']['output'];
 };
 
-export type Child = {
+export type Child = Named & {
   __typename?: 'Child';
+  name: Scalars['String']['output'];
   parent: Named;
 };
 
@@ -82,6 +83,12 @@ export type MutationSaveAuthorArgs = {
 };
 
 export type Named = {
+  name: Scalars['String']['output'];
+};
+
+export type Parent = Named & {
+  __typename?: 'Parent';
+  children: Array<Named>;
   name: Scalars['String']['output'];
 };
 

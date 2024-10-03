@@ -66,8 +66,9 @@ export type CalendarInterval = {
   start: Scalars['Date']['output'];
 };
 
-export type Child = {
+export type Child = Named & {
   __typename?: 'Child';
+  name: Scalars['String']['output'];
   parent: Named;
 };
 
@@ -82,6 +83,12 @@ export type MutationSaveAuthorArgs = {
 };
 
 export type Named = {
+  name: Scalars['String']['output'];
+};
+
+export type Parent = Named & {
+  __typename?: 'Parent';
+  children: Array<Named>;
   name: Scalars['String']['output'];
 };
 
@@ -254,18 +261,37 @@ factories["CalendarInterval"] = newCalendarInterval;
 
 export interface ChildOptions {
   __typename?: "Child";
-  parent?: Child["parent"];
+  name?: Child["name"];
+  parent?: NamedOptions;
 }
 
 export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
   const o = (options.__typename ? options : cache["Child"] = {}) as Child;
   (cache.all ??= new Set()).add(o);
   o.__typename = "Child";
+  o.name = options.name ?? "name";
   o.parent = maybeNew("Author", options.parent, cache, options.hasOwnProperty("parent"));
   return o;
 }
 
 factories["Child"] = newChild;
+
+export interface ParentOptions {
+  __typename?: "Parent";
+  children?: Array<NamedOptions>;
+  name?: Parent["name"];
+}
+
+export function newParent(options: ParentOptions = {}, cache: Record<string, any> = {}): Parent {
+  const o = (options.__typename ? options : cache["Parent"] = {}) as Parent;
+  (cache.all ??= new Set()).add(o);
+  o.__typename = "Parent";
+  o.children = (options.children ?? []).map((i) => maybeNew("Named", i, cache, options.hasOwnProperty("children")));
+  o.name = options.name ?? "name";
+  return o;
+}
+
+factories["Parent"] = newParent;
 
 export interface PopularityDetailOptions {
   __typename?: "PopularityDetail";
@@ -308,7 +334,7 @@ factories["SaveAuthorResult"] = newSaveAuthorResult;
 export interface SearchResultsOptions {
   __typename?: "SearchResults";
   result1?: SearchResults["result1"];
-  result2?: SearchResults["result2"];
+  result2?: NamedOptions | null;
   result3?: AuthorOptions | null;
 }
 
@@ -317,7 +343,7 @@ export function newSearchResults(options: SearchResultsOptions = {}, cache: Reco
   (cache.all ??= new Set()).add(o);
   o.__typename = "SearchResults";
   o.result1 = options.result1 ?? null;
-  o.result2 = options.result2 ?? null;
+  o.result2 = maybeNewOrNull("Named", options.result2, cache);
   o.result3 = maybeNewOrNull("Author", options.result3, cache);
   return o;
 }
@@ -343,11 +369,11 @@ export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Reco
 
 factories["WorkingDetail"] = newWorkingDetail;
 
-export type NamedOptions = AuthorOptions | BookOptions | PopularityDetailOptions;
+export type NamedOptions = AuthorOptions | BookOptions | ChildOptions | ParentOptions | PopularityDetailOptions;
 
-export type NamedType = Author | Book | PopularityDetail;
+export type NamedType = Author | Book | Child | Parent | PopularityDetail;
 
-export type NamedTypeName = "Author" | "Book" | "PopularityDetail";
+export type NamedTypeName = "Author" | "Book" | "Child" | "Parent" | "PopularityDetail";
 
 factories["Named"] = newAuthor;
 
