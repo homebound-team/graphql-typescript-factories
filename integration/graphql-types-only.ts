@@ -17,6 +17,7 @@ export type Scalars = {
 
 export type Author = Named & {
   __typename?: 'Author';
+  anotherId: Scalars['ID']['output'];
   birthday?: Maybe<Scalars['Date']['output']>;
   bookPopularities: Array<PopularityDetail>;
   books: Array<Book>;

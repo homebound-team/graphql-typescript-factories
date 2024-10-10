@@ -71,6 +71,9 @@ const getTests = (testType: TestType = "types-in-file") => {
       const a2 = newAuthor({});
       expect(a1.id).toEqual("a:1");
       expect(a2.id).toEqual("a:2");
+      // And does not assign other ID fields with author ids
+      expect(a1.anotherId).toEqual("anotherId");
+      expect(a2.anotherId).toEqual("anotherId");
       resetFactoryIds();
       const a3 = newAuthor({});
       expect(a3.id).toEqual("a:1");

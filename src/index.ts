@@ -314,7 +314,11 @@ function getInitializer(
       return `0`;
     } else if (type.name === "Boolean") {
       return `false`;
-    } else if (type.name === "String") {
+    } else if (field.name === "id" && type.name === "ID") {
+      // Only call for the `id` field, since we don't want to generate new IDs if the object contains other ID fields
+      return `nextFactoryId("${object.name}")`;
+    } else if (type.name === "String" || type.name === "ID") {
+      // Treat String and ID fields the same, as long as it is not the `id: ID` field
       const maybeCode = isEnumDetailObject(object) && object.getFields()["code"];
       if (maybeCode) {
         const value = getRealEnumForEnumDetailObject(object).getValues()[0].value;
@@ -322,8 +326,6 @@ function getInitializer(
       } else {
         return `"${field.name}"`;
       }
-    } else if (type.name === "ID") {
-      return `nextFactoryId("${object.name}")`;
     }
     const defaultFromConfig = config.scalarDefaults?.[type.name];
     if (defaultFromConfig) {
