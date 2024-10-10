@@ -1,6 +1,8 @@
 # An entity that will be a mapped typed
 type Author implements Named {
   id: ID!
+  # Ensure that the newAuthor factory does not call nextFactoryId for this field
+  anotherId: ID!
   name: String!
   summary: AuthorSummary!
   popularity: PopularityDetail!

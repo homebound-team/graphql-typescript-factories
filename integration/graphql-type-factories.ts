@@ -20,6 +20,7 @@ import { newDate } from "./testData";
 const factories: Record<string, Function> = {};
 export interface AuthorOptions {
   __typename?: "Author";
+  anotherId?: Author["anotherId"];
   birthday?: Author["birthday"];
   bookPopularities?: Array<PopularityDetailOptions>;
   books?: Array<BookOptions>;
@@ -35,6 +36,7 @@ export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any
   const o = (options.__typename ? options : cache["Author"] = {}) as Author;
   (cache.all ??= new Set()).add(o);
   o.__typename = "Author";
+  o.anotherId = options.anotherId ?? "anotherId";
   o.birthday = options.birthday ?? null;
   o.bookPopularities = (options.bookPopularities ?? []).map((i) => enumOrDetailOfPopularity(i));
   o.books = (options.books ?? []).map((i) => maybeNew("Book", i, cache, options.hasOwnProperty("books")));
