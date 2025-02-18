@@ -12,6 +12,7 @@ import {
   GraphQLOutputType,
   GraphQLScalarType,
   GraphQLSchema,
+  GraphQLUnionType,
 } from "graphql";
 import { Code, code, imp, Import, joinCode } from "ts-poet";
 import PluginOutput = Types.PluginOutput;
@@ -32,7 +33,10 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
     }
   });
 
-  chunks.push(code`const factories: Record<string, Function> = {}`);
+  chunks.push(code`const factories: Record<string, Function> = {};`);
+  chunks.push(
+    code`type RequireTypename<T extends { __typename?: string; }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;`,
+  );
 
   const hasFactories = generateFactoryFunctions(config, convert, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
@@ -134,26 +138,32 @@ function newFactory(
   interfaceImpls: Record<string, string[]>,
   type: GraphQLObjectType,
 ): Code {
-  const scopedName = maybeImport(config, type.name);
+  const typeImp = maybeImport(config, type.name);
 
   function generateListField(f: GraphQLField<any, any>, fieldType: GraphQLList<any>): string {
     // If this is a list of objects, initialize it as normal, but then also probe it to ensure each
     // passed-in value goes through `maybeNew` to ensure `__typename` is set, otherwise Apollo breaks.
-    if (isEnumDetailObject(fieldType.ofType.ofType)) {
-      const enumType = getRealEnumForEnumDetailObject(fieldType.ofType.ofType);
-      return `o.${f.name} = (options.${f.name} ?? []).map(i => enumOrDetailOf${enumType.name}(i));`;
-    } else if (fieldType.ofType instanceof GraphQLObjectType || fieldType.ofType instanceof GraphQLInterfaceType) {
-      const objectType = fieldType.ofType.name;
-      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull("${objectType}", i, cache));`;
-    } else if (
-      fieldType.ofType instanceof GraphQLNonNull &&
-      (fieldType.ofType.ofType instanceof GraphQLObjectType || fieldType.ofType.ofType instanceof GraphQLInterfaceType)
-    ) {
-      const objectType = fieldType.ofType.ofType.name;
-      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew("${objectType}", i, cache, options.hasOwnProperty("${f.name}")));`;
-    } else {
-      return `o.${f.name} = options.${f.name} ?? [];`;
+    let elementType = fieldType.ofType as GraphQLOutputType;
+    if (elementType instanceof GraphQLNonNull) {
+      elementType = elementType.ofType;
+      if (isEnumDetailObject(elementType)) {
+        const enumType = getRealEnumForEnumDetailObject(elementType);
+        return `o.${f.name} = (options.${f.name} ?? []).map(i => enumOrDetailOf${enumType.name}(i));`;
+      } else if (elementType instanceof GraphQLObjectType || elementType instanceof GraphQLInterfaceType) {
+        return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew("${elementType.name}", i, cache, options.hasOwnProperty("${f.name}")));`;
+      } else if (elementType instanceof GraphQLUnionType) {
+        return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNew(i?.__typename ?? "{${elementType.getTypes()[0].name}", i, cache, options.hasOwnProperty("${f.name}")));`;
+      }
+    } else if (isEnumDetailObject(elementType)) {
+      const enumType = getRealEnumForEnumDetailObject(elementType);
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => enumOrDetailOrNullOf${enumType.name}(i));`;
+    } else if (elementType instanceof GraphQLObjectType || elementType instanceof GraphQLInterfaceType) {
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull("${elementType.name}", i, cache));`;
+    } else if (elementType instanceof GraphQLUnionType) {
+      return `o.${f.name} = (options.${f.name} ?? []).map(i => maybeNewOrNull(i?.__typename ?? "{${elementType.getTypes()[0].name}", i, cache));`;
     }
+
+    return `o.${f.name} = options.${f.name} ?? [];`;
   }
 
   // Instead of using `DeepPartial`, we make an explicit `AuthorOptions` for each type, primarily
@@ -164,24 +174,38 @@ function newFactory(
 
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
       return code`${f.name}?: ${fieldType.name}Options | ${getRealImportedEnum(config, fieldType)}${orNull};`;
-    } else if (fieldType instanceof GraphQLObjectType || fieldType instanceof GraphQLInterfaceType) {
-      return code`${f.name}?: ${fieldType.name}Options${orNull};`;
+    } else if (fieldType instanceof GraphQLObjectType) {
+      return code`${f.name}?: ${fieldType.name} | ${fieldType.name}Options${orNull};`;
+    } else if (fieldType instanceof GraphQLInterfaceType) {
+      return code`${f.name}?: ${interfaceImpls[fieldType.name].join(" | ")} | ${maybeImport(config, fieldType.name)} | ${fieldType.name}Options${orNull};`;
+    } else if (fieldType instanceof GraphQLUnionType) {
+      const optionTypes = fieldType
+        .getTypes()
+        .map((t) => t.name)
+        .map((name, i) => (i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`));
+      return code`${f.name}?: ${maybeImport(config, fieldType.name)} | ${optionTypes.join(" | ")}${orNull};`;
     } else if (fieldType instanceof GraphQLList) {
-      const elementType = maybeDenull(fieldType.ofType);
-      if (elementType instanceof GraphQLObjectType || elementType instanceof GraphQLInterfaceType) {
-        const isNonNull = fieldType.ofType instanceof GraphQLNonNull;
-        const optionsType = code`${elementType.name}Options`;
-        const maybeMaybeOptionsType = isNonNull ? optionsType : code`${maybeImport(config, "Maybe")}<${optionsType}>`;
-        return code`${f.name}?: Array<${maybeMaybeOptionsType}>${orNull};`;
+      const elementType = maybeDenull(fieldType.ofType) as GraphQLNamedType;
+      const isNonNull = fieldType.ofType instanceof GraphQLNonNull;
+      const optionsType = code`${elementType.name}Options`;
+      const maybeMaybeType = (type: Code) => (isNonNull ? type : code`${maybeImport(config, "Maybe")}<${type}>`);
+      if (elementType instanceof GraphQLObjectType) {
+        return code`${f.name}?: Array<${maybeMaybeType(code`${elementType.name} | ${optionsType}`)}>${orNull};`;
+      } else if (elementType instanceof GraphQLInterfaceType) {
+        return code`${f.name}?: Array<${maybeMaybeType(code`${interfaceImpls[elementType.name].join(" | ")} | ${maybeImport(config, elementType.name)} | ${optionsType}`)}>${orNull};`;
+      } else if (elementType instanceof GraphQLUnionType) {
+        const optionTypes = elementType
+          .getTypes()
+          .map((t) => t.name)
+          .map((name, i) => (i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`));
+        return code`${f.name}?: Array<${maybeMaybeType(code`${maybeImport(config, elementType.name)} | ${optionTypes.join(" | ")}`)}>${orNull};`;
       } else {
-        return code`${f.name}?: ${scopedName}["${f.name}"]${orNull};`;
+        return code`${f.name}?: ${typeImp}["${f.name}"]${orNull};`;
       }
     } else {
-      return code`${f.name}?: ${scopedName}["${f.name}"];`;
+      return code`${f.name}?: ${typeImp}["${f.name}"];`;
     }
   });
-
-  const typeImp = maybeImport(config, type.name);
 
   const factory = code`
     export interface ${type.name}Options {
@@ -201,29 +225,22 @@ function newFactory(
             return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
           } else if (fieldType instanceof GraphQLList) {
             return generateListField(f, fieldType);
-          } else if (fieldType instanceof GraphQLObjectType) {
+          } else if (fieldType instanceof GraphQLObjectType || fieldType instanceof GraphQLInterfaceType) {
             return `o.${f.name} = maybeNew("${fieldType.name}", options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
-          } else if (fieldType instanceof GraphQLInterfaceType) {
-            // Default to the first type which happens to implement the interface
-            const implTypeName = interfaceImpls[fieldType.name][0] || fail();
-            return `o.${f.name} = maybeNew("${implTypeName}", options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
+          } else if (fieldType instanceof GraphQLUnionType) {
+            return `o.${f.name} = maybeNew(options.${f.name}?.__typename ?? "${fieldType.getTypes()[0].name}", options.${f.name}, cache);`;
           } else {
             return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, convertFn, type, f, fieldType)};`;
           }
-        } else if (f.type instanceof GraphQLObjectType) {
-          if (isEnumDetailObject(f.type)) {
-            const enumType = getRealEnumForEnumDetailObject(f.type);
-            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
-          }
-          return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
-        } else if (f.type instanceof GraphQLInterfaceType) {
-          if (isEnumDetailObject(f.type)) {
-            const enumType = getRealEnumForEnumDetailObject(f.type);
-            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
-          }
-          return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
+        } else if (isEnumDetailObject(f.type)) {
+          const enumType = getRealEnumForEnumDetailObject(f.type);
+          return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
         } else if (f.type instanceof GraphQLList) {
           return generateListField(f, f.type);
+        } else if (f.type instanceof GraphQLObjectType || f.type instanceof GraphQLInterfaceType) {
+          return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
+        } else if (f.type instanceof GraphQLUnionType) {
+          return `o.${f.name} = maybeNewOrNull(options.${f.name}?.__typename ?? "${f.type.getTypes()[0].name}", options.${f.name}, cache);`;
         } else {
           return `o.${f.name} = options.${f.name} ?? null;`;
         }
@@ -267,7 +284,7 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
 
   return [
     code`
-      export type ${interfaceName}Options = ${impls.map((name) => `${name}Options`).join(" | ")};
+      export type ${interfaceName}Options = ${impls.map((name, i) => (i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`)).join(" | ")};
     `,
 
     code`
@@ -282,7 +299,16 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
     `,
 
     code`
-      factories["${interfaceName}"] = new${defaultImpl};
+      export function new${interfaceName}(): ${defaultImpl};
+      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, cache?: Record<string, any>): ${name};`)}
+      export function new${interfaceName}(options: ${interfaceName}Options = {}, cache: Record<string, any> = {}):  ${interfaceName}Type  {
+        const { __typename = "${defaultImpl}" } = options;
+        return factories[__typename](options, cache);
+      }
+    `,
+
+    code`
+      factories["${interfaceName}"] = new${interfaceName};
     `,
   ];
 }

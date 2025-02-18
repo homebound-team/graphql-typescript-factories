@@ -7,10 +7,12 @@ import {
   CalendarInterval,
   Child,
   Maybe,
+  Named,
   Parent,
   Popularity,
   PopularityDetail,
   SaveAuthorResult,
+  SearchResult,
   SearchResults,
   Working,
   WorkingDetail,
@@ -18,18 +20,19 @@ import {
 import { newDate } from "./testData";
 
 const factories: Record<string, Function> = {};
+type RequireTypename<T extends { __typename?: string }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;
 export interface AuthorOptions {
   __typename?: "Author";
   anotherId?: Author["anotherId"];
   birthday?: Author["birthday"];
-  bookPopularities?: Array<PopularityDetailOptions>;
-  books?: Array<BookOptions>;
+  bookPopularities?: Array<PopularityDetail | PopularityDetailOptions>;
+  books?: Array<Book | BookOptions>;
   id?: Author["id"];
   name?: Author["name"];
   popularity?: PopularityDetailOptions | Popularity;
-  summary?: AuthorSummaryOptions;
+  summary?: AuthorSummary | AuthorSummaryOptions;
   working?: Author["working"];
-  workingDetail?: Array<WorkingDetailOptions>;
+  workingDetail?: Array<WorkingDetail | WorkingDetailOptions>;
 }
 
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
@@ -54,7 +57,7 @@ factories["Author"] = newAuthor;
 export interface AuthorSummaryOptions {
   __typename?: "AuthorSummary";
   amountOfSales?: AuthorSummary["amountOfSales"];
-  author?: AuthorOptions;
+  author?: Author | AuthorOptions;
   id?: AuthorSummary["id"];
   numberOfBooks?: AuthorSummary["numberOfBooks"];
 }
@@ -74,10 +77,10 @@ factories["AuthorSummary"] = newAuthorSummary;
 
 export interface BookOptions {
   __typename?: "Book";
-  coauthor?: AuthorOptions | null;
+  coauthor?: Author | AuthorOptions | null;
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity | null;
-  reviews?: Array<Maybe<BookReviewOptions>> | null;
+  reviews?: Array<Maybe<BookReview | BookReviewOptions>> | null;
   status?: Book["status"];
 }
 
@@ -133,7 +136,7 @@ factories["CalendarInterval"] = newCalendarInterval;
 export interface ChildOptions {
   __typename?: "Child";
   name?: Child["name"];
-  parent?: NamedOptions;
+  parent?: Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions;
 }
 
 export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
@@ -149,7 +152,7 @@ factories["Child"] = newChild;
 
 export interface ParentOptions {
   __typename?: "Parent";
-  children?: Array<NamedOptions>;
+  children?: Array<Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions>;
   name?: Parent["name"];
 }
 
@@ -186,7 +189,7 @@ factories["PopularityDetail"] = newPopularityDetail;
 
 export interface SaveAuthorResultOptions {
   __typename?: "SaveAuthorResult";
-  author?: AuthorOptions;
+  author?: Author | AuthorOptions;
 }
 
 export function newSaveAuthorResult(
@@ -204,16 +207,16 @@ factories["SaveAuthorResult"] = newSaveAuthorResult;
 
 export interface SearchResultsOptions {
   __typename?: "SearchResults";
-  result1?: SearchResults["result1"];
-  result2?: NamedOptions | null;
-  result3?: AuthorOptions | null;
+  result1?: SearchResult | AuthorOptions | RequireTypename<BookOptions> | null;
+  result2?: Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions | null;
+  result3?: Author | AuthorOptions | null;
 }
 
 export function newSearchResults(options: SearchResultsOptions = {}, cache: Record<string, any> = {}): SearchResults {
   const o = (options.__typename ? options : cache["SearchResults"] = {}) as SearchResults;
   (cache.all ??= new Set()).add(o);
   o.__typename = "SearchResults";
-  o.result1 = options.result1 ?? null;
+  o.result1 = maybeNewOrNull(options.result1?.__typename ?? "Author", options.result1, cache);
   o.result2 = maybeNewOrNull("Named", options.result2, cache);
   o.result3 = maybeNewOrNull("Author", options.result3, cache);
   return o;
@@ -240,13 +243,32 @@ export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Reco
 
 factories["WorkingDetail"] = newWorkingDetail;
 
-export type NamedOptions = AuthorOptions | BookOptions | ChildOptions | ParentOptions | PopularityDetailOptions;
+export type NamedOptions =
+  | AuthorOptions
+  | RequireTypename<BookOptions>
+  | RequireTypename<ChildOptions>
+  | RequireTypename<ParentOptions>
+  | RequireTypename<PopularityDetailOptions>;
 
 export type NamedType = Author | Book | Child | Parent | PopularityDetail;
 
 export type NamedTypeName = "Author" | "Book" | "Child" | "Parent" | "PopularityDetail";
 
-factories["Named"] = newAuthor;
+export function newNamed(): Author;
+export function newNamed(options: AuthorOptions, cache?: Record<string, any>): Author;
+export function newNamed(options: RequireTypename<BookOptions>, cache?: Record<string, any>): Book;
+export function newNamed(options: RequireTypename<ChildOptions>, cache?: Record<string, any>): Child;
+export function newNamed(options: RequireTypename<ParentOptions>, cache?: Record<string, any>): Parent;
+export function newNamed(
+  options: RequireTypename<PopularityDetailOptions>,
+  cache?: Record<string, any>,
+): PopularityDetail;
+export function newNamed(options: NamedOptions = {}, cache: Record<string, any> = {}): NamedType {
+  const { __typename = "Author" } = options;
+  return factories[__typename](options, cache);
+}
+
+factories["Named"] = newNamed;
 
 const enumDetailNameOfPopularity = { High: "High", Low: "Low" };
 
