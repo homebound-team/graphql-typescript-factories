@@ -302,8 +302,9 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
       export function new${interfaceName}(): ${defaultImpl};
       ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, cache?: Record<string, any>): ${name};`)}
       export function new${interfaceName}(options: ${interfaceName}Options = {}, cache: Record<string, any> = {}):  ${interfaceName}Type  {
-        const { __typename = "${defaultImpl}" } = options;
-        return factories[__typename](options, cache);
+        const { __typename = "${defaultImpl}" } = options ?? {};
+        const maybeCached = Object.keys(options).length === 0 ? cache[__typename] : undefined
+        return maybeCached ?? maybeNew(__typename, options ?? {}, cache);
       }
     `,
 

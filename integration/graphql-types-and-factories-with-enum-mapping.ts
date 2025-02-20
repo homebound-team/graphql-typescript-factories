@@ -274,7 +274,7 @@ export function newChild(options: ChildOptions = {}, cache: Record<string, any> 
   (cache.all ??= new Set()).add(o);
   o.__typename = "Child";
   o.name = options.name ?? "name";
-  o.parent = maybeNew("Author", options.parent, cache, options.hasOwnProperty("parent"));
+  o.parent = maybeNew("Named", options.parent, cache, options.hasOwnProperty("parent"));
   return o;
 }
 
@@ -394,8 +394,9 @@ export function newNamed(
   cache?: Record<string, any>,
 ): PopularityDetail;
 export function newNamed(options: NamedOptions = {}, cache: Record<string, any> = {}): NamedType {
-  const { __typename = "Author" } = options;
-  return factories[__typename](options, cache);
+  const { __typename = "Author" } = options ?? {};
+  const maybeCached = Object.keys(options).length === 0 ? cache[__typename] : undefined;
+  return maybeCached ?? maybeNew(__typename, options ?? {}, cache);
 }
 
 factories["Named"] = newNamed;
