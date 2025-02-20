@@ -216,7 +216,6 @@ function newFactory(
     export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${typeImp} {
       const o = (options.__typename ? options : cache["${type.name}"] = {}) as ${typeImp};
       (cache.all ??= new Set()).add(o);
-      cache["${type.name}"] ??= o;
       o.__typename = '${type.name}';
       ${Object.values(type.getFields()).map((f) => {
         if (f.type instanceof GraphQLNonNull) {

@@ -168,7 +168,6 @@ export interface AuthorOptions {
 export function newAuthor(options: AuthorOptions = {}, cache: Record<string, any> = {}): Author {
   const o = (options.__typename ? options : cache["Author"] = {}) as Author;
   (cache.all ??= new Set()).add(o);
-  cache["Author"] ??= o;
   o.__typename = "Author";
   o.anotherId = options.anotherId ?? "anotherId";
   o.birthday = options.birthday ?? null;
@@ -196,7 +195,6 @@ export interface AuthorSummaryOptions {
 export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: Record<string, any> = {}): AuthorSummary {
   const o = (options.__typename ? options : cache["AuthorSummary"] = {}) as AuthorSummary;
   (cache.all ??= new Set()).add(o);
-  cache["AuthorSummary"] ??= o;
   o.__typename = "AuthorSummary";
   o.amountOfSales = options.amountOfSales ?? null;
   o.author = maybeNew("Author", options.author, cache, options.hasOwnProperty("author"));
@@ -219,7 +217,6 @@ export interface BookOptions {
 export function newBook(options: BookOptions = {}, cache: Record<string, any> = {}): Book {
   const o = (options.__typename ? options : cache["Book"] = {}) as Book;
   (cache.all ??= new Set()).add(o);
-  cache["Book"] ??= o;
   o.__typename = "Book";
   o.coauthor = maybeNewOrNull("Author", options.coauthor, cache);
   o.name = options.name ?? "name";
@@ -239,7 +236,6 @@ export interface BookReviewOptions {
 export function newBookReview(options: BookReviewOptions = {}, cache: Record<string, any> = {}): BookReview {
   const o = (options.__typename ? options : cache["BookReview"] = {}) as BookReview;
   (cache.all ??= new Set()).add(o);
-  cache["BookReview"] ??= o;
   o.__typename = "BookReview";
   o.rating = options.rating ?? 0;
   return o;
@@ -259,7 +255,6 @@ export function newCalendarInterval(
 ): CalendarInterval {
   const o = (options.__typename ? options : cache["CalendarInterval"] = {}) as CalendarInterval;
   (cache.all ??= new Set()).add(o);
-  cache["CalendarInterval"] ??= o;
   o.__typename = "CalendarInterval";
   o.end = options.end ?? newDate();
   o.start = options.start ?? newDate();
@@ -277,7 +272,6 @@ export interface ChildOptions {
 export function newChild(options: ChildOptions = {}, cache: Record<string, any> = {}): Child {
   const o = (options.__typename ? options : cache["Child"] = {}) as Child;
   (cache.all ??= new Set()).add(o);
-  cache["Child"] ??= o;
   o.__typename = "Child";
   o.name = options.name ?? "name";
   o.parent = maybeNew("Named", options.parent, cache, options.hasOwnProperty("parent"));
@@ -295,7 +289,6 @@ export interface ParentOptions {
 export function newParent(options: ParentOptions = {}, cache: Record<string, any> = {}): Parent {
   const o = (options.__typename ? options : cache["Parent"] = {}) as Parent;
   (cache.all ??= new Set()).add(o);
-  cache["Parent"] ??= o;
   o.__typename = "Parent";
   o.children = (options.children ?? []).map((i) => maybeNew("Named", i, cache, options.hasOwnProperty("children")));
   o.name = options.name ?? "name";
@@ -316,7 +309,6 @@ export function newPopularityDetail(
 ): PopularityDetail {
   const o = (options.__typename ? options : cache["PopularityDetail"] = {}) as PopularityDetail;
   (cache.all ??= new Set()).add(o);
-  cache["PopularityDetail"] ??= o;
   o.__typename = "PopularityDetail";
   o.code = options.code ?? Popularity.High;
   o.name = options.name ?? "High";
@@ -336,7 +328,6 @@ export function newSaveAuthorResult(
 ): SaveAuthorResult {
   const o = (options.__typename ? options : cache["SaveAuthorResult"] = {}) as SaveAuthorResult;
   (cache.all ??= new Set()).add(o);
-  cache["SaveAuthorResult"] ??= o;
   o.__typename = "SaveAuthorResult";
   o.author = maybeNew("Author", options.author, cache, options.hasOwnProperty("author"));
   return o;
@@ -354,7 +345,6 @@ export interface SearchResultsOptions {
 export function newSearchResults(options: SearchResultsOptions = {}, cache: Record<string, any> = {}): SearchResults {
   const o = (options.__typename ? options : cache["SearchResults"] = {}) as SearchResults;
   (cache.all ??= new Set()).add(o);
-  cache["SearchResults"] ??= o;
   o.__typename = "SearchResults";
   o.result1 = maybeNewOrNull(options.result1?.__typename ?? "Author", options.result1, cache);
   o.result2 = maybeNewOrNull("Named", options.result2, cache);
@@ -374,7 +364,6 @@ export interface WorkingDetailOptions {
 export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: Record<string, any> = {}): WorkingDetail {
   const o = (options.__typename ? options : cache["WorkingDetail"] = {}) as WorkingDetail;
   (cache.all ??= new Set()).add(o);
-  cache["WorkingDetail"] ??= o;
   o.__typename = "WorkingDetail";
   o.code = options.code ?? Working.NO;
   o.extraField = options.extraField ?? 0;
