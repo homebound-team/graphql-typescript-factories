@@ -49,10 +49,22 @@ const getTests = (testType: TestType = "types-in-file") => {
     resetFactoryIds,
     newSearchResults,
   }: TestObject) => {
-    it("does not infinite loop", () => {
+    it("avoids cyclic references so generated objects can be serialized", () => {
       const a = newAuthor({});
       expect(a.name).toEqual("name");
-      expect(a.summary.author).toStrictEqual(a);
+      expect(a.summary.author).toBeUndefined();
+      expect(function () {
+        JSON.stringify(a);
+      }).not.toThrow();
+    });
+
+    it("reuses cached entities for separate siblings", () => {
+      const sr = newSearchResults({ result1: {}, result2: {} });
+      expect(sr.result1?.__typename).toEqual("Author");
+      expect(sr.result2).toStrictEqual(sr.result1);
+      expect(function () {
+        JSON.stringify(sr);
+      }).not.toThrow();
     });
 
     it("auto-factories children", () => {
