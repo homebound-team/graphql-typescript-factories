@@ -37,6 +37,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   chunks.push(
     code`type RequireTypename<T extends { __typename?: string; }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;`,
   );
+  chunks.push(code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; };`);
 
   const hasFactories = generateFactoryFunctions(config, convert, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
@@ -213,39 +214,44 @@ function newFactory(
       ${joinCode(optionFields, { on: "\n" })}
     }
 
-    export function new${type.name}(options: ${type.name}Options = {}, cache: Record<string, any> = {}): ${typeImp} {
+    export function new${type.name}(options: ${type.name}Options = {}, cache: FactoryCache = {}): ${typeImp} {
       const o = (options.__typename ? options : cache["${type.name}"] = {}) as ${typeImp};
       (cache.all ??= new Set()).add(o);
-      o.__typename = '${type.name}';
-      ${Object.values(type.getFields()).map((f) => {
-        if (f.type instanceof GraphQLNonNull) {
-          const fieldType = f.type.ofType;
-          if (isEnumDetailObject(fieldType)) {
-            const enumType = getRealEnumForEnumDetailObject(fieldType);
-            return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
-          } else if (fieldType instanceof GraphQLList) {
-            return generateListField(f, fieldType);
-          } else if (fieldType instanceof GraphQLObjectType || fieldType instanceof GraphQLInterfaceType) {
-            return `o.${f.name} = maybeNew("${fieldType.name}", options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
-          } else if (fieldType instanceof GraphQLUnionType) {
-            return `o.${f.name} = maybeNew(options.${f.name}?.__typename ?? "${fieldType.getTypes()[0].name}", options.${f.name}, cache);`;
+      (cache.active ??= new Set()).add(o);
+      try {
+        o.__typename = '${type.name}';
+        ${Object.values(type.getFields()).map((f) => {
+          if (f.type instanceof GraphQLNonNull) {
+            const fieldType = f.type.ofType;
+            if (isEnumDetailObject(fieldType)) {
+              const enumType = getRealEnumForEnumDetailObject(fieldType);
+              return `o.${f.name} = enumOrDetailOf${enumType.name}(options.${f.name});`;
+            } else if (fieldType instanceof GraphQLList) {
+              return generateListField(f, fieldType);
+            } else if (fieldType instanceof GraphQLObjectType || fieldType instanceof GraphQLInterfaceType) {
+              return `o.${f.name} = maybeNew("${fieldType.name}", options.${f.name}, cache, options.hasOwnProperty("${f.name}"));`;
+            } else if (fieldType instanceof GraphQLUnionType) {
+              return `o.${f.name} = maybeNew(options.${f.name}?.__typename ?? "${fieldType.getTypes()[0].name}", options.${f.name}, cache);`;
+            } else {
+              return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, convertFn, type, f, fieldType)};`;
+            }
+          } else if (isEnumDetailObject(f.type)) {
+            const enumType = getRealEnumForEnumDetailObject(f.type);
+            return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
+          } else if (f.type instanceof GraphQLList) {
+            return generateListField(f, f.type);
+          } else if (f.type instanceof GraphQLObjectType || f.type instanceof GraphQLInterfaceType) {
+            return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
+          } else if (f.type instanceof GraphQLUnionType) {
+            return `o.${f.name} = maybeNewOrNull(options.${f.name}?.__typename ?? "${f.type.getTypes()[0].name}", options.${f.name}, cache);`;
           } else {
-            return code`o.${f.name} = options.${f.name} ?? ${getInitializer(config, convertFn, type, f, fieldType)};`;
+            return `o.${f.name} = options.${f.name} ?? null;`;
           }
-        } else if (isEnumDetailObject(f.type)) {
-          const enumType = getRealEnumForEnumDetailObject(f.type);
-          return `o.${f.name} = enumOrDetailOrNullOf${enumType.name}(options.${f.name});`;
-        } else if (f.type instanceof GraphQLList) {
-          return generateListField(f, f.type);
-        } else if (f.type instanceof GraphQLObjectType || f.type instanceof GraphQLInterfaceType) {
-          return `o.${f.name} = maybeNewOrNull("${(f.type as any).name}", options.${f.name}, cache);`;
-        } else if (f.type instanceof GraphQLUnionType) {
-          return `o.${f.name} = maybeNewOrNull(options.${f.name}?.__typename ?? "${f.type.getTypes()[0].name}", options.${f.name}, cache);`;
-        } else {
-          return `o.${f.name} = options.${f.name} ?? null;`;
-        }
-      })}
-      return o;
+        })}
+        return o;
+      } finally {
+        cache.active?.delete(o);
+      }
     }
 
     factories["${type.name}"] = new${type.name};
@@ -256,21 +262,44 @@ function newFactory(
 
 function generateMaybeFunctions(chunks: Code[]): void {
   const maybeFunctions = code`
-    function maybeNew(type: string, value: { __typename?: string } | object | undefined, cache: Record<string, any>, isSet: boolean = false): any {
+    function getCachedValue(type: string, cache: FactoryCache): any {
+      const cachedValue = cache[type];
+      if (cachedValue === undefined) {
+        return undefined;
+      }
+      return cache.active?.has(cachedValue) ? undefined : cachedValue;
+    }
+
+    function hasActiveCachedValue(type: string, cache: FactoryCache): boolean {
+      const cachedValue = cache[type];
+      return cachedValue !== undefined && cache.active?.has(cachedValue) === true;
+    }
+
+    function maybeNew(type: string, value: { __typename?: string } | object | undefined, cache: FactoryCache, isSet: boolean = false): any {
       if (value === undefined) {
-        return isSet ? undefined : cache[type] || factories[type]({}, cache)
+        const cachedValue = getCachedValue(type, cache);
+        if (cachedValue !== undefined || isSet || hasActiveCachedValue(type, cache)) {
+          return cachedValue;
+        }
+        return factories[type]({}, cache)
       } else if ("__typename" in value && value.__typename) {
-        return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
+        if (cache.all?.has(value)) {
+          return cache.active?.has(value) ? undefined : value;
+        }
+        return factories[value.__typename](value, cache);
       } else {
         return factories[type](value, cache);
       }
     }
 
-    function maybeNewOrNull(type: string, value: { __typename?: string } | object | undefined | null, cache: Record<string, any>): any {
+    function maybeNewOrNull(type: string, value: { __typename?: string } | object | undefined | null, cache: FactoryCache): any {
       if (!value) {
         return null;
       } else if ("__typename" in value && value.__typename) {
-        return cache.all?.has(value) ? value : factories[value.__typename](value, cache);
+        if (cache.all?.has(value)) {
+          return cache.active?.has(value) ? undefined : value;
+        }
+        return factories[value.__typename](value, cache);
       } else {
         return factories[type](value, cache);
       }
@@ -300,11 +329,18 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
 
     code`
       export function new${interfaceName}(): ${defaultImpl};
-      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, cache?: Record<string, any>): ${name};`)}
-      export function new${interfaceName}(options: ${interfaceName}Options = {}, cache: Record<string, any> = {}):  ${interfaceName}Type  {
+      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, cache?: FactoryCache): ${name};`)}
+      export function new${interfaceName}(options: ${interfaceName}Options = {}, cache: FactoryCache = {}): ${interfaceName}Type {
         const { __typename = "${defaultImpl}" } = options ?? {};
-        const maybeCached = Object.keys(options).length === 0 ? cache[__typename] : undefined
-        return maybeCached ?? maybeNew(__typename, options ?? {}, cache);
+        const shouldUseCache = Object.keys(options).length === 0;
+        const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;
+        if (maybeCached !== undefined) {
+          return maybeCached;
+        }
+        if (shouldUseCache && hasActiveCachedValue(__typename, cache)) {
+          return undefined as any;
+        }
+        return maybeNew(__typename, options ?? {}, cache);
       }
     `,
 
