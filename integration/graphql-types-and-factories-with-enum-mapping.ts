@@ -150,8 +150,11 @@ export type WorkingDetail = {
 import { newDate } from "./testData";
 
 const factories: Record<string, Function> = {};
+export interface FactoryOptions {
+  withCycles?: boolean;
+}
 type RequireTypename<T extends { __typename?: string }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;
-type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object> };
+type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean };
 export interface AuthorOptions {
   __typename?: "Author";
   anotherId?: Author["anotherId"];
@@ -166,7 +169,12 @@ export interface AuthorOptions {
   workingDetail?: Array<WorkingDetail | WorkingDetailOptions>;
 }
 
-export function newAuthor(options: AuthorOptions = {}, cache: FactoryCache = {}): Author {
+export function newAuthor(options?: AuthorOptions, factoryOptions?: FactoryOptions): Author;
+export function newAuthor(
+  options: AuthorOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): Author {
   const o = (options.__typename ? options : cache["Author"] = {}) as Author;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -198,7 +206,12 @@ export interface AuthorSummaryOptions {
   numberOfBooks?: AuthorSummary["numberOfBooks"];
 }
 
-export function newAuthorSummary(options: AuthorSummaryOptions = {}, cache: FactoryCache = {}): AuthorSummary {
+export function newAuthorSummary(options?: AuthorSummaryOptions, factoryOptions?: FactoryOptions): AuthorSummary;
+export function newAuthorSummary(
+  options: AuthorSummaryOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): AuthorSummary {
   const o = (options.__typename ? options : cache["AuthorSummary"] = {}) as AuthorSummary;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -225,7 +238,12 @@ export interface BookOptions {
   status?: Book["status"];
 }
 
-export function newBook(options: BookOptions = {}, cache: FactoryCache = {}): Book {
+export function newBook(options?: BookOptions, factoryOptions?: FactoryOptions): Book;
+export function newBook(
+  options: BookOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): Book {
   const o = (options.__typename ? options : cache["Book"] = {}) as Book;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -249,7 +267,12 @@ export interface BookReviewOptions {
   rating?: BookReview["rating"];
 }
 
-export function newBookReview(options: BookReviewOptions = {}, cache: FactoryCache = {}): BookReview {
+export function newBookReview(options?: BookReviewOptions, factoryOptions?: FactoryOptions): BookReview;
+export function newBookReview(
+  options: BookReviewOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): BookReview {
   const o = (options.__typename ? options : cache["BookReview"] = {}) as BookReview;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -270,7 +293,15 @@ export interface CalendarIntervalOptions {
   start?: CalendarInterval["start"];
 }
 
-export function newCalendarInterval(options: CalendarIntervalOptions = {}, cache: FactoryCache = {}): CalendarInterval {
+export function newCalendarInterval(
+  options?: CalendarIntervalOptions,
+  factoryOptions?: FactoryOptions,
+): CalendarInterval;
+export function newCalendarInterval(
+  options: CalendarIntervalOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): CalendarInterval {
   const o = (options.__typename ? options : cache["CalendarInterval"] = {}) as CalendarInterval;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -292,7 +323,12 @@ export interface ChildOptions {
   parent?: Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions;
 }
 
-export function newChild(options: ChildOptions = {}, cache: FactoryCache = {}): Child {
+export function newChild(options?: ChildOptions, factoryOptions?: FactoryOptions): Child;
+export function newChild(
+  options: ChildOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): Child {
   const o = (options.__typename ? options : cache["Child"] = {}) as Child;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -314,7 +350,12 @@ export interface ParentOptions {
   name?: Parent["name"];
 }
 
-export function newParent(options: ParentOptions = {}, cache: FactoryCache = {}): Parent {
+export function newParent(options?: ParentOptions, factoryOptions?: FactoryOptions): Parent;
+export function newParent(
+  options: ParentOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): Parent {
   const o = (options.__typename ? options : cache["Parent"] = {}) as Parent;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -336,7 +377,15 @@ export interface PopularityDetailOptions {
   name?: PopularityDetail["name"];
 }
 
-export function newPopularityDetail(options: PopularityDetailOptions = {}, cache: FactoryCache = {}): PopularityDetail {
+export function newPopularityDetail(
+  options?: PopularityDetailOptions,
+  factoryOptions?: FactoryOptions,
+): PopularityDetail;
+export function newPopularityDetail(
+  options: PopularityDetailOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): PopularityDetail {
   const o = (options.__typename ? options : cache["PopularityDetail"] = {}) as PopularityDetail;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -357,7 +406,15 @@ export interface SaveAuthorResultOptions {
   author?: Author | AuthorOptions;
 }
 
-export function newSaveAuthorResult(options: SaveAuthorResultOptions = {}, cache: FactoryCache = {}): SaveAuthorResult {
+export function newSaveAuthorResult(
+  options?: SaveAuthorResultOptions,
+  factoryOptions?: FactoryOptions,
+): SaveAuthorResult;
+export function newSaveAuthorResult(
+  options: SaveAuthorResultOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): SaveAuthorResult {
   const o = (options.__typename ? options : cache["SaveAuthorResult"] = {}) as SaveAuthorResult;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -379,7 +436,12 @@ export interface SearchResultsOptions {
   result3?: Author | AuthorOptions | null;
 }
 
-export function newSearchResults(options: SearchResultsOptions = {}, cache: FactoryCache = {}): SearchResults {
+export function newSearchResults(options?: SearchResultsOptions, factoryOptions?: FactoryOptions): SearchResults;
+export function newSearchResults(
+  options: SearchResultsOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): SearchResults {
   const o = (options.__typename ? options : cache["SearchResults"] = {}) as SearchResults;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -403,7 +465,12 @@ export interface WorkingDetailOptions {
   name?: WorkingDetail["name"];
 }
 
-export function newWorkingDetail(options: WorkingDetailOptions = {}, cache: FactoryCache = {}): WorkingDetail {
+export function newWorkingDetail(options?: WorkingDetailOptions, factoryOptions?: FactoryOptions): WorkingDetail;
+export function newWorkingDetail(
+  options: WorkingDetailOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): WorkingDetail {
   const o = (options.__typename ? options : cache["WorkingDetail"] = {}) as WorkingDetail;
   (cache.all ??= new Set()).add(o);
   (cache.active ??= new Set()).add(o);
@@ -432,12 +499,19 @@ export type NamedType = Author | Book | Child | Parent | PopularityDetail;
 export type NamedTypeName = "Author" | "Book" | "Child" | "Parent" | "PopularityDetail";
 
 export function newNamed(): Author;
-export function newNamed(options: AuthorOptions, cache?: FactoryCache): Author;
-export function newNamed(options: RequireTypename<BookOptions>, cache?: FactoryCache): Book;
-export function newNamed(options: RequireTypename<ChildOptions>, cache?: FactoryCache): Child;
-export function newNamed(options: RequireTypename<ParentOptions>, cache?: FactoryCache): Parent;
-export function newNamed(options: RequireTypename<PopularityDetailOptions>, cache?: FactoryCache): PopularityDetail;
-export function newNamed(options: NamedOptions = {}, cache: FactoryCache = {}): NamedType {
+export function newNamed(options: AuthorOptions, factoryOptions?: FactoryOptions): Author;
+export function newNamed(options: RequireTypename<BookOptions>, factoryOptions?: FactoryOptions): Book;
+export function newNamed(options: RequireTypename<ChildOptions>, factoryOptions?: FactoryOptions): Child;
+export function newNamed(options: RequireTypename<ParentOptions>, factoryOptions?: FactoryOptions): Parent;
+export function newNamed(
+  options: RequireTypename<PopularityDetailOptions>,
+  factoryOptions?: FactoryOptions,
+): PopularityDetail;
+export function newNamed(
+  options: NamedOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): NamedType {
   const { __typename = "Author" } = options ?? {};
   const shouldUseCache = Object.keys(options).length === 0;
   const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;
@@ -521,17 +595,25 @@ function nextFactoryId(objectName: string): string {
   return tag + ":" + nextId;
 }
 
+function newFactoryCache(factoryOptions: FactoryOptions = {}): FactoryCache {
+  return { withCycles: factoryOptions.withCycles === true };
+}
+
+function reuseWouldCreateCycle(cache: FactoryCache, value: object): boolean {
+  return cache.withCycles !== true && cache.active?.has(value) === true;
+}
+
 function getCachedValue(type: string, cache: FactoryCache): any {
   const cachedValue = cache[type];
   if (cachedValue === undefined) {
     return undefined;
   }
-  return cache.active?.has(cachedValue) ? undefined : cachedValue;
+  return reuseWouldCreateCycle(cache, cachedValue) ? undefined : cachedValue;
 }
 
 function hasActiveCachedValue(type: string, cache: FactoryCache): boolean {
   const cachedValue = cache[type];
-  return cachedValue !== undefined && cache.active?.has(cachedValue) === true;
+  return cachedValue !== undefined && reuseWouldCreateCycle(cache, cachedValue);
 }
 
 function maybeNew(
@@ -545,14 +627,14 @@ function maybeNew(
     if (cachedValue !== undefined || isSet || hasActiveCachedValue(type, cache)) {
       return cachedValue;
     }
-    return factories[type]({}, cache);
+    return factories[type]({}, undefined, cache);
   } else if ("__typename" in value && value.__typename) {
     if (cache.all?.has(value)) {
-      return cache.active?.has(value) ? undefined : value;
+      return reuseWouldCreateCycle(cache, value) ? undefined : value;
     }
-    return factories[value.__typename](value, cache);
+    return factories[value.__typename](value, undefined, cache);
   } else {
-    return factories[type](value, cache);
+    return factories[type](value, undefined, cache);
   }
 }
 
@@ -565,10 +647,10 @@ function maybeNewOrNull(
     return null;
   } else if ("__typename" in value && value.__typename) {
     if (cache.all?.has(value)) {
-      return cache.active?.has(value) ? undefined : value;
+      return reuseWouldCreateCycle(cache, value) ? undefined : value;
     }
-    return factories[value.__typename](value, cache);
+    return factories[value.__typename](value, undefined, cache);
   } else {
-    return factories[type](value, cache);
+    return factories[type](value, undefined, cache);
   }
 }
