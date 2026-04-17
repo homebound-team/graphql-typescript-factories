@@ -34,10 +34,13 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   });
 
   chunks.push(code`const factories: Record<string, Function> = {};`);
+  chunks.push(code`export interface FactoryOptions { withCycles?: boolean; }`);
   chunks.push(
     code`type RequireTypename<T extends { __typename?: string; }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;`,
   );
-  chunks.push(code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; };`);
+  chunks.push(
+    code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean; };`,
+  );
 
   const hasFactories = generateFactoryFunctions(config, convert, schema, interfaceImpls, chunks);
   generateInterfaceFactoryFunctions(config, interfaceImpls, chunks);
@@ -214,7 +217,12 @@ function newFactory(
       ${joinCode(optionFields, { on: "\n" })}
     }
 
-    export function new${type.name}(options: ${type.name}Options = {}, cache: FactoryCache = {}): ${typeImp} {
+    export function new${type.name}(options?: ${type.name}Options, factoryOptions?: FactoryOptions): ${typeImp};
+    export function new${type.name}(
+      options: ${type.name}Options = {},
+      factoryOptions: FactoryOptions = {},
+      cache: FactoryCache = newFactoryCache(factoryOptions),
+    ): ${typeImp} {
       const o = (options.__typename ? options : cache["${type.name}"] = {}) as ${typeImp};
       (cache.all ??= new Set()).add(o);
       (cache.active ??= new Set()).add(o);
@@ -262,17 +270,25 @@ function newFactory(
 
 function generateMaybeFunctions(chunks: Code[]): void {
   const maybeFunctions = code`
+    function newFactoryCache(factoryOptions: FactoryOptions = {}): FactoryCache {
+      return { withCycles: factoryOptions.withCycles === true };
+    }
+
+    function reuseWouldCreateCycle(cache: FactoryCache, value: object): boolean {
+      return cache.withCycles !== true && cache.active?.has(value) === true;
+    }
+
     function getCachedValue(type: string, cache: FactoryCache): any {
       const cachedValue = cache[type];
       if (cachedValue === undefined) {
         return undefined;
       }
-      return cache.active?.has(cachedValue) ? undefined : cachedValue;
+      return reuseWouldCreateCycle(cache, cachedValue) ? undefined : cachedValue;
     }
 
     function hasActiveCachedValue(type: string, cache: FactoryCache): boolean {
       const cachedValue = cache[type];
-      return cachedValue !== undefined && cache.active?.has(cachedValue) === true;
+      return cachedValue !== undefined && reuseWouldCreateCycle(cache, cachedValue);
     }
 
     function maybeNew(type: string, value: { __typename?: string } | object | undefined, cache: FactoryCache, isSet: boolean = false): any {
@@ -281,14 +297,14 @@ function generateMaybeFunctions(chunks: Code[]): void {
         if (cachedValue !== undefined || isSet || hasActiveCachedValue(type, cache)) {
           return cachedValue;
         }
-        return factories[type]({}, cache)
+        return factories[type]({}, undefined, cache)
       } else if ("__typename" in value && value.__typename) {
         if (cache.all?.has(value)) {
-          return cache.active?.has(value) ? undefined : value;
+          return reuseWouldCreateCycle(cache, value) ? undefined : value;
         }
-        return factories[value.__typename](value, cache);
+        return factories[value.__typename](value, undefined, cache);
       } else {
-        return factories[type](value, cache);
+        return factories[type](value, undefined, cache);
       }
     }
 
@@ -297,11 +313,11 @@ function generateMaybeFunctions(chunks: Code[]): void {
         return null;
       } else if ("__typename" in value && value.__typename) {
         if (cache.all?.has(value)) {
-          return cache.active?.has(value) ? undefined : value;
+          return reuseWouldCreateCycle(cache, value) ? undefined : value;
         }
-        return factories[value.__typename](value, cache);
+        return factories[value.__typename](value, undefined, cache);
       } else {
-        return factories[type](value, cache);
+        return factories[type](value, undefined, cache);
       }
     }`;
   chunks.push(maybeFunctions);
@@ -329,8 +345,12 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
 
     code`
       export function new${interfaceName}(): ${defaultImpl};
-      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, cache?: FactoryCache): ${name};`)}
-      export function new${interfaceName}(options: ${interfaceName}Options = {}, cache: FactoryCache = {}): ${interfaceName}Type {
+      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, factoryOptions?: FactoryOptions): ${name};`)}
+      export function new${interfaceName}(
+        options: ${interfaceName}Options = {},
+        factoryOptions: FactoryOptions = {},
+        cache: FactoryCache = newFactoryCache(factoryOptions),
+      ): ${interfaceName}Type {
         const { __typename = "${defaultImpl}" } = options ?? {};
         const shouldUseCache = Object.keys(options).length === 0;
         const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;

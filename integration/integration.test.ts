@@ -7,15 +7,19 @@ import * as TypesAndFactoriesWithEnumMapping from "./graphql-types-and-factories
 
 type TestType = "types-imported" | "types-in-file" | "types-in-file-with-enum-mapping";
 
+type TestFactoryOptions = {
+  withCycles?: boolean;
+};
+
 type TestObject = {
-  newAuthor: (src?: any) => any;
-  newAuthorSummary: (src?: any) => any;
-  newBook: (src?: any) => any;
-  newCalendarInterval: (src?: any) => any;
-  newChild: (src?: any) => any;
+  newAuthor: (src?: any, factoryOptions?: TestFactoryOptions) => any;
+  newAuthorSummary: (src?: any, factoryOptions?: TestFactoryOptions) => any;
+  newBook: (src?: any, factoryOptions?: TestFactoryOptions) => any;
+  newCalendarInterval: (src?: any, factoryOptions?: TestFactoryOptions) => any;
+  newChild: (src?: any, factoryOptions?: TestFactoryOptions) => any;
   Popularity: any;
   resetFactoryIds: () => void;
-  newSearchResults: (src: any) => any;
+  newSearchResults: (src: any, factoryOptions?: TestFactoryOptions) => any;
 };
 
 const getTestObjects = (testType: TestType): TestObject => {
@@ -65,6 +69,14 @@ const getTests = (testType: TestType = "types-in-file") => {
       expect(function () {
         JSON.stringify(sr);
       }).not.toThrow();
+    });
+
+    it("can opt into cyclic references", () => {
+      const a = newAuthor({}, { withCycles: true });
+      expect(a.summary.author).toStrictEqual(a);
+      expect(function () {
+        JSON.stringify(a);
+      }).toThrow(TypeError);
     });
 
     it("auto-factories children", () => {
