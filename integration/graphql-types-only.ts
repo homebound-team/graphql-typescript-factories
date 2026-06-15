@@ -146,3 +146,5 @@ export type WorkingDetail = {
   extraField: Scalars['Int']['output'];
   name: Scalars['String']['output'];
 };
+
+export type SearchResultsDetailsFragment = { __typename?: 'SearchResults', result1?: { __typename: 'Author', id: string, name: string } | { __typename: 'Book', name: string } | null };

@@ -170,6 +170,13 @@ const getTests = (testType: TestType = "types-in-file") => {
 };
 
 describe("typescript-factories", () => {
+  it("returns union typenames as required", () => {
+    const searchResults: TypesAndFactories.SearchResultsDetailsFragment = TypesAndFactories.newSearchResults({
+      result1: { __typename: "Book" },
+    });
+    expect(searchResults.result1?.__typename).toEqual("Book");
+  });
+
   getTests("types-in-file");
   getTests("types-imported");
   getTests("types-in-file-with-enum-mapping");

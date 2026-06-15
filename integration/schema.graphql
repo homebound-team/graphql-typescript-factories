@@ -45,7 +45,6 @@ type SearchResults {
   result3: Author
 }
 
-
 union SearchResult = Author | Book
 
 schema {

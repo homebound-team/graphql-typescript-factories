@@ -1,5 +1,6 @@
 overwrite: true
 schema: "./integration/schema.graphql"
+documents: "./integration/operations.graphql"
 config:
   scalarDefaults:
     Date: "./testData#newDate"

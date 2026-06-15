@@ -1,5 +1,6 @@
 overwrite: true
 schema: "./integration/schema.graphql"
+documents: "./integration/operations.graphql"
 generates:
   integration/graphql-types-and-factories.ts:
     config:
