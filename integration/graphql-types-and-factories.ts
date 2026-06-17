@@ -176,19 +176,21 @@ type FactoryResult<T> = T extends ReadonlyArray<infer U> ? Array<FactoryResult<U
     }
   : T
 : T;
+
+type FactoryInput<T, TOptions> = T | FactoryResult<T> | TOptions;
 type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean };
 export interface AuthorOptions {
   __typename?: "Author";
   anotherId?: Author["anotherId"];
   birthday?: Author["birthday"];
-  bookPopularities?: Array<PopularityDetail | PopularityDetailOptions>;
-  books?: Array<Book | BookOptions>;
+  bookPopularities?: Array<FactoryInput<PopularityDetail, PopularityDetailOptions>>;
+  books?: Array<FactoryInput<Book, BookOptions>>;
   id?: Author["id"];
   name?: Author["name"];
   popularity?: PopularityDetailOptions | Popularity;
-  summary?: AuthorSummary | AuthorSummaryOptions;
+  summary?: FactoryInput<AuthorSummary, AuthorSummaryOptions>;
   working?: Author["working"];
-  workingDetail?: Array<WorkingDetail | WorkingDetailOptions>;
+  workingDetail?: Array<FactoryInput<WorkingDetail, WorkingDetailOptions>>;
 }
 
 export function newAuthor(options?: AuthorOptions, factoryOptions?: FactoryOptions): FactoryResult<Author>;
@@ -223,7 +225,7 @@ factories["Author"] = newAuthor;
 export interface AuthorSummaryOptions {
   __typename?: "AuthorSummary";
   amountOfSales?: AuthorSummary["amountOfSales"];
-  author?: Author | AuthorOptions;
+  author?: FactoryInput<Author, AuthorOptions>;
   id?: AuthorSummary["id"];
   numberOfBooks?: AuthorSummary["numberOfBooks"];
 }
@@ -256,10 +258,10 @@ factories["AuthorSummary"] = newAuthorSummary;
 
 export interface BookOptions {
   __typename?: "Book";
-  coauthor?: Author | AuthorOptions | null;
+  coauthor?: FactoryInput<Author, AuthorOptions> | null;
   name?: Book["name"];
   popularity?: PopularityDetailOptions | Popularity | null;
-  reviews?: Array<Maybe<BookReview | BookReviewOptions>> | null;
+  reviews?: Array<Maybe<FactoryInput<BookReview, BookReviewOptions>>> | null;
   status?: Book["status"];
 }
 
@@ -345,7 +347,7 @@ factories["CalendarInterval"] = newCalendarInterval;
 export interface ChildOptions {
   __typename?: "Child";
   name?: Child["name"];
-  parent?: Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions;
+  parent?: Named | FactoryResult<NamedType> | NamedOptions;
 }
 
 export function newChild(options?: ChildOptions, factoryOptions?: FactoryOptions): FactoryResult<Child>;
@@ -371,7 +373,7 @@ factories["Child"] = newChild;
 
 export interface ParentOptions {
   __typename?: "Parent";
-  children?: Array<Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions>;
+  children?: Array<Named | FactoryResult<NamedType> | NamedOptions>;
   name?: Parent["name"];
 }
 
@@ -428,7 +430,7 @@ factories["PopularityDetail"] = newPopularityDetail;
 
 export interface SaveAuthorResultOptions {
   __typename?: "SaveAuthorResult";
-  author?: Author | AuthorOptions;
+  author?: FactoryInput<Author, AuthorOptions>;
 }
 
 export function newSaveAuthorResult(
@@ -456,9 +458,9 @@ factories["SaveAuthorResult"] = newSaveAuthorResult;
 
 export interface SearchResultsOptions {
   __typename?: "SearchResults";
-  result1?: SearchResult | AuthorOptions | RequireTypename<BookOptions> | null;
-  result2?: Author | Book | Child | Parent | PopularityDetail | Named | NamedOptions | null;
-  result3?: Author | AuthorOptions | null;
+  result1?: SearchResult | FactoryResult<SearchResult> | AuthorOptions | RequireTypename<BookOptions> | null;
+  result2?: Named | FactoryResult<NamedType> | NamedOptions | null;
+  result3?: FactoryInput<Author, AuthorOptions> | null;
 }
 
 export function newSearchResults(

@@ -182,6 +182,15 @@ describe("typescript-factories", () => {
     expect(author.books[0].__typename).toEqual("Book");
   });
 
+  it("accepts factory results as nested options", () => {
+    const author = TypesAndFactories.newAuthor({ books: [TypesAndFactories.newBook()] });
+    const searchResults = TypesAndFactories.newSearchResults({ result1: TypesAndFactories.newBook() });
+    const child = TypesAndFactories.newChild({ parent: TypesAndFactories.newAuthor() });
+    expect(author.books[0].__typename).toEqual("Book");
+    expect(searchResults.result1?.__typename).toEqual("Book");
+    expect(child.parent.name).toEqual("name");
+  });
+
   getTests("types-in-file");
   getTests("types-imported");
   getTests("types-in-file-with-enum-mapping");
