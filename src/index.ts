@@ -59,6 +59,8 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
             }
           : T
         : T;
+
+    type FactoryInput<T, TOptions> = T | FactoryResult<T> | TOptions;
   `);
   chunks.push(
     code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean; };`,
@@ -201,30 +203,30 @@ function newFactory(
     if (fieldType instanceof GraphQLObjectType && isEnumDetailObject(fieldType)) {
       return code`${f.name}?: ${fieldType.name}Options | ${getRealImportedEnum(config, fieldType)}${orNull};`;
     } else if (fieldType instanceof GraphQLObjectType) {
-      return code`${f.name}?: ${fieldType.name} | ${fieldType.name}Options${orNull};`;
+      return code`${f.name}?: FactoryInput<${maybeImport(config, fieldType.name)}, ${fieldType.name}Options>${orNull};`;
     } else if (fieldType instanceof GraphQLInterfaceType) {
-      return code`${f.name}?: ${interfaceImpls[fieldType.name].join(" | ")} | ${maybeImport(config, fieldType.name)} | ${fieldType.name}Options${orNull};`;
+      return code`${f.name}?: ${maybeImport(config, fieldType.name)} | FactoryResult<${fieldType.name}Type> | ${fieldType.name}Options${orNull};`;
     } else if (fieldType instanceof GraphQLUnionType) {
       const optionTypes = fieldType
         .getTypes()
         .map((t) => t.name)
         .map((name, i) => (i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`));
-      return code`${f.name}?: ${maybeImport(config, fieldType.name)} | ${optionTypes.join(" | ")}${orNull};`;
+      return code`${f.name}?: ${maybeImport(config, fieldType.name)} | FactoryResult<${maybeImport(config, fieldType.name)}> | ${optionTypes.join(" | ")}${orNull};`;
     } else if (fieldType instanceof GraphQLList) {
       const elementType = maybeDenull(fieldType.ofType) as GraphQLNamedType;
       const isNonNull = fieldType.ofType instanceof GraphQLNonNull;
       const optionsType = code`${elementType.name}Options`;
       const maybeMaybeType = (type: Code) => (isNonNull ? type : code`${maybeImport(config, "Maybe")}<${type}>`);
       if (elementType instanceof GraphQLObjectType) {
-        return code`${f.name}?: Array<${maybeMaybeType(code`${elementType.name} | ${optionsType}`)}>${orNull};`;
+        return code`${f.name}?: Array<${maybeMaybeType(code`FactoryInput<${maybeImport(config, elementType.name)}, ${optionsType}>`)}>${orNull};`;
       } else if (elementType instanceof GraphQLInterfaceType) {
-        return code`${f.name}?: Array<${maybeMaybeType(code`${interfaceImpls[elementType.name].join(" | ")} | ${maybeImport(config, elementType.name)} | ${optionsType}`)}>${orNull};`;
+        return code`${f.name}?: Array<${maybeMaybeType(code`${maybeImport(config, elementType.name)} | FactoryResult<${elementType.name}Type> | ${optionsType}`)}>${orNull};`;
       } else if (elementType instanceof GraphQLUnionType) {
         const optionTypes = elementType
           .getTypes()
           .map((t) => t.name)
           .map((name, i) => (i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`));
-        return code`${f.name}?: Array<${maybeMaybeType(code`${maybeImport(config, elementType.name)} | ${optionTypes.join(" | ")}`)}>${orNull};`;
+        return code`${f.name}?: Array<${maybeMaybeType(code`${maybeImport(config, elementType.name)} | FactoryResult<${maybeImport(config, elementType.name)}> | ${optionTypes.join(" | ")}`)}>${orNull};`;
       } else {
         return code`${f.name}?: ${typeImp}["${f.name}"]${orNull};`;
       }
