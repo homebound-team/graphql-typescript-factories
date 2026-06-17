@@ -38,6 +38,26 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   chunks.push(
     code`type RequireTypename<T extends { __typename?: string; }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;`,
   );
+  chunks.push(code`
+    /**
+     * Mirrors factory runtime behavior by requiring __typename on factory-created object results.
+     *
+     * GraphQL Codegen's base schema types correctly keep __typename optional because raw GraphQL
+     * objects only include it when an operation selects it or a client adds it. Operation and
+     * fragment result types can require __typename when it is selected. Factory results are a
+     * separate case: these factories always assign __typename recursively at runtime, so their
+     * public return type should expose that stronger shape without changing the base schema types.
+     */
+    type FactoryResult<T> = T extends Array<infer U>
+      ? Array<FactoryResult<U>>
+      : T extends object
+        // Keep the generated schema shape, but make optional __typename required when the schema type has it.
+        ? T & (T extends { __typename?: infer N } ? { __typename: NonNullable<N> } : {}) & {
+            // Recurse through fields so nested object/list/union/interface values also expose required __typename.
+            [K in keyof T]: FactoryResult<T[K]>;
+          }
+        : T;
+  `);
   chunks.push(
     code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean; };`,
   );
@@ -217,12 +237,12 @@ function newFactory(
       ${joinCode(optionFields, { on: "\n" })}
     }
 
-    export function new${type.name}(options?: ${type.name}Options, factoryOptions?: FactoryOptions): ${typeImp};
+    export function new${type.name}(options?: ${type.name}Options, factoryOptions?: FactoryOptions): FactoryResult<${typeImp}>;
     export function new${type.name}(
       options: ${type.name}Options = {},
       factoryOptions: FactoryOptions = {},
       cache: FactoryCache = newFactoryCache(factoryOptions),
-    ): ${typeImp} {
+    ): FactoryResult<${typeImp}> {
       const o = (options.__typename ? options : cache["${type.name}"] = {}) as ${typeImp};
       (cache.all ??= new Set()).add(o);
       (cache.active ??= new Set()).add(o);
@@ -256,7 +276,7 @@ function newFactory(
             return `o.${f.name} = options.${f.name} ?? null;`;
           }
         })}
-        return o;
+        return o as FactoryResult<${typeImp}>;
       } finally {
         cache.active?.delete(o);
       }
@@ -344,13 +364,13 @@ function newInterfaceFactory(config: Config, interfaceName: string, impls: strin
     `,
 
     code`
-      export function new${interfaceName}(): ${defaultImpl};
-      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, factoryOptions?: FactoryOptions): ${name};`)}
+      export function new${interfaceName}(): FactoryResult<${maybeImport(config, defaultImpl)}>;
+      ${impls.map((name, i) => code`export function new${interfaceName}(options: ${i === 0 ? `${name}Options` : `RequireTypename<${name}Options>`}, factoryOptions?: FactoryOptions): FactoryResult<${maybeImport(config, name)}>;`)}
       export function new${interfaceName}(
         options: ${interfaceName}Options = {},
         factoryOptions: FactoryOptions = {},
         cache: FactoryCache = newFactoryCache(factoryOptions),
-      ): ${interfaceName}Type {
+      ): FactoryResult<${interfaceName}Type> {
         const { __typename = "${defaultImpl}" } = options ?? {};
         const shouldUseCache = Object.keys(options).length === 0;
         const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;

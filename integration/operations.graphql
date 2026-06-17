@@ -1,0 +1,16 @@
+# This fragment reproduces factory result assignability when an operation selects __typename
+# on a union field. The raw schema type has optional __typename on each concrete union
+# member, but operation result types require it when selected, and factory runtime always
+# sets it recursively.
+fragment SearchResultsDetails on SearchResults {
+  result1 {
+    __typename
+    ... on Author {
+      id
+      name
+    }
+    ... on Book {
+      name
+    }
+  }
+}
