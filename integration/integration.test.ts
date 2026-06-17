@@ -177,6 +177,11 @@ describe("typescript-factories", () => {
     expect(searchResults.result1?.__typename).toEqual("Book");
   });
 
+  it("returns list element typenames as required", () => {
+    const author: TypesAndFactories.AuthorBooksDetailsFragment = TypesAndFactories.newAuthor({ books: [{}] });
+    expect(author.books[0].__typename).toEqual("Book");
+  });
+
   getTests("types-in-file");
   getTests("types-imported");
   getTests("types-in-file-with-enum-mapping");

@@ -149,6 +149,8 @@ export type WorkingDetail = {
 
 export type SearchResultsDetailsFragment = { __typename?: 'SearchResults', result1?: { __typename: 'Author', id: string, name: string } | { __typename: 'Book', name: string } | null };
 
+export type AuthorBooksDetailsFragment = { __typename?: 'Author', books: Array<{ __typename: 'Book', name: string }> };
+
 import { newDate } from "./testData";
 
 const factories: Record<string, Function> = {};
@@ -165,15 +167,14 @@ type RequireTypename<T extends { __typename?: string }> = Omit<T, "__typename"> 
  * separate case: these factories always assign __typename recursively at runtime, so their
  * public return type should expose that stronger shape without changing the base schema types.
  */
-type FactoryResult<T> = T extends Array<infer U> ? Array<FactoryResult<U>> : T extends object
-  // Keep the generated schema shape, but make optional __typename required when the schema type has it.
-  ?
-    & T
-    & (T extends { __typename?: infer N } ? { __typename: NonNullable<N> } : {})
-    & {
-      // Recurse through fields so nested object/list/union/interface values also expose required __typename.
-      [K in keyof T]: FactoryResult<T[K]>;
+type FactoryResult<T> = T extends ReadonlyArray<infer U> ? Array<FactoryResult<U>> : T extends object
+  // Rebuild the object instead of intersecting with T, so raw nested field types do not leak through arrays.
+  // I.e. Author.books.pop() should return a Book with required __typename, not the raw schema Book.
+  ? "__typename" extends keyof T
+    ? Omit<{ [K in keyof T]: FactoryResult<T[K]> }, "__typename"> & {
+      __typename: NonNullable<T extends { __typename?: infer N } ? N : never>;
     }
+  : T
 : T;
 type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean };
 export interface AuthorOptions {
