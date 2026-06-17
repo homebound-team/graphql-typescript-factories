@@ -148,3 +148,5 @@ export type WorkingDetail = {
 };
 
 export type SearchResultsDetailsFragment = { __typename?: 'SearchResults', result1?: { __typename: 'Author', id: string, name: string } | { __typename: 'Book', name: string } | null };
+
+export type AuthorBooksDetailsFragment = { __typename?: 'Author', books: Array<{ __typename: 'Book', name: string }> };

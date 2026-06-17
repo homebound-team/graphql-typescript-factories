@@ -14,3 +14,14 @@ fragment SearchResultsDetails on SearchResults {
     }
   }
 }
+
+# This fragment reproduces the same assignability issue through a list field. FactoryResult
+# must rebuild object fields instead of intersecting with the raw schema type, otherwise
+# array methods like pop() can still expose the untransformed Book type with optional
+# __typename.
+fragment AuthorBooksDetails on Author {
+  books {
+    __typename
+    name
+  }
+}
