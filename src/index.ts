@@ -51,10 +51,8 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
     type FactoryResult<T> = T extends ReadonlyArray<infer U>
       ? Array<FactoryResult<U>>
       : T extends object
-        // Rebuild the object instead of intersecting with T, so raw nested field types do not leak through arrays.
-        // I.e. Author.books.pop() should return a Book with required __typename, not the raw schema Book.
         ? "__typename" extends keyof T
-          ? Omit<{ [K in keyof T]: FactoryResult<T[K]> }, "__typename"> & {
+          ? T & Omit<{ [K in keyof T]: FactoryResult<T[K]> }, "__typename"> & {
               __typename: NonNullable<T extends { __typename?: infer N } ? N : never>;
             }
           : T

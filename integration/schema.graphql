@@ -119,3 +119,22 @@ type Child implements Named {
   # For testing newChild() picks newAuthor
   parent: Named!
 }
+
+interface Project {
+  name: String!
+  children: [Project!]!
+}
+
+# Tests a Codegen intersection boundary case where an object narrows an interface field.
+# I.e. Region is generated as `Project & { children: Market[] }`, so FactoryResult must keep
+# Region.children as factory-created Markets instead of leaking the inherited Project children type.
+type Region implements Project {
+  name: String!
+  children: [Market!]!
+}
+
+# Completes the Project graph for Region.children and keeps the interface field recursive.
+type Market implements Project {
+  name: String!
+  children: [Project!]!
+}

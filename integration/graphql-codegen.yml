@@ -4,6 +4,8 @@ documents: "./integration/operations.graphql"
 generates:
   integration/graphql-types-and-factories.ts:
     config:
+      scalars:
+        Date: Date
       scalarDefaults:
         Date: "./testData#newDate"
       taggedIds:
