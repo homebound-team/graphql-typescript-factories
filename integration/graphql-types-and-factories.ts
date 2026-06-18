@@ -174,7 +174,7 @@ import { newDate } from "./testData";
 
 const factories: Record<string, Function> = {};
 export interface FactoryOptions {
-  withCycles?: boolean;
+  avoidCycles?: boolean;
 }
 type RequireTypename<T extends { __typename?: string }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;
 /**
@@ -196,7 +196,7 @@ type FactoryResult<T> = T extends ReadonlyArray<infer U> ? Array<FactoryResult<U
   : T;
 
 type FactoryInput<T, TOptions> = T | FactoryResult<T> | TOptions;
-type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean };
+type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; avoidCycles?: boolean };
 export interface AuthorOptions {
   __typename?: "Author";
   anotherId?: Author["anotherId"];
@@ -735,11 +735,11 @@ function nextFactoryId(objectName: string): string {
 }
 
 function newFactoryCache(factoryOptions: FactoryOptions = {}): FactoryCache {
-  return { withCycles: factoryOptions.withCycles === true };
+  return { avoidCycles: factoryOptions.avoidCycles === true };
 }
 
 function reuseWouldCreateCycle(cache: FactoryCache, value: object): boolean {
-  return cache.withCycles !== true && cache.active?.has(value) === true;
+  return cache.avoidCycles === true && cache.active?.has(value) === true;
 }
 
 function getCachedValue(type: string, cache: FactoryCache): any {

@@ -8,7 +8,7 @@ import * as TypesAndFactoriesWithEnumMapping from "./graphql-types-and-factories
 type TestType = "types-imported" | "types-in-file" | "types-in-file-with-enum-mapping";
 
 type TestFactoryOptions = {
-  withCycles?: boolean;
+  avoidCycles?: boolean;
 };
 
 type TestObject = {
@@ -53,30 +53,27 @@ const getTests = (testType: TestType = "types-in-file") => {
     resetFactoryIds,
     newSearchResults,
   }: TestObject) => {
-    it("avoids cyclic references so generated objects can be serialized", () => {
+    it("creates cyclic references by default", () => {
       const a = newAuthor({});
       expect(a.name).toEqual("name");
-      expect(a.summary.author).toBeUndefined();
+      expect(a.summary.author).toStrictEqual(a);
       expect(function () {
         JSON.stringify(a);
-      }).not.toThrow();
+      }).toThrow(TypeError);
     });
 
     it("reuses cached entities for separate siblings", () => {
       const sr = newSearchResults({ result1: {}, result2: {} });
       expect(sr.result1?.__typename).toEqual("Author");
       expect(sr.result2).toStrictEqual(sr.result1);
-      expect(function () {
-        JSON.stringify(sr);
-      }).not.toThrow();
     });
 
-    it("can opt into cyclic references", () => {
-      const a = newAuthor({}, { withCycles: true });
-      expect(a.summary.author).toStrictEqual(a);
+    it("can opt into avoiding cyclic references", () => {
+      const a = newAuthor({}, { avoidCycles: true });
+      expect(a.summary.author).toBeUndefined();
       expect(function () {
         JSON.stringify(a);
-      }).toThrow(TypeError);
+      }).not.toThrow();
     });
 
     it("auto-factories children", () => {

@@ -34,7 +34,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
   });
 
   chunks.push(code`const factories: Record<string, Function> = {};`);
-  chunks.push(code`export interface FactoryOptions { withCycles?: boolean; }`);
+  chunks.push(code`export interface FactoryOptions { avoidCycles?: boolean; }`);
   chunks.push(
     code`type RequireTypename<T extends { __typename?: string; }> = Omit<T, "__typename"> & Required<Pick<T, "__typename">>;`,
   );
@@ -61,7 +61,7 @@ export const plugin: PluginFunction = async (schema, documents, config: Config) 
     type FactoryInput<T, TOptions> = T | FactoryResult<T> | TOptions;
   `);
   chunks.push(
-    code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean; };`,
+    code`type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; avoidCycles?: boolean; };`,
   );
 
   const hasFactories = generateFactoryFunctions(config, convert, schema, interfaceImpls, chunks);
@@ -293,11 +293,11 @@ function newFactory(
 function generateMaybeFunctions(chunks: Code[]): void {
   const maybeFunctions = code`
     function newFactoryCache(factoryOptions: FactoryOptions = {}): FactoryCache {
-      return { withCycles: factoryOptions.withCycles === true };
+      return { avoidCycles: factoryOptions.avoidCycles === true };
     }
 
     function reuseWouldCreateCycle(cache: FactoryCache, value: object): boolean {
-      return cache.withCycles !== true && cache.active?.has(value) === true;
+      return cache.avoidCycles === true && cache.active?.has(value) === true;
     }
 
     function getCachedValue(type: string, cache: FactoryCache): any {
