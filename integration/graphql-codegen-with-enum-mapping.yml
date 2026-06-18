@@ -6,6 +6,8 @@ generates:
     config:
       namingConvention:
         enumValues: keep
+      scalars:
+        Date: Date
       scalarDefaults:
         Date: "./testData#newDate"
       taggedIds:

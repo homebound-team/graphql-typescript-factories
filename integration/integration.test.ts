@@ -178,8 +178,16 @@ describe("typescript-factories", () => {
   });
 
   it("returns list element typenames as required", () => {
-    const author: TypesAndFactories.AuthorBooksDetailsFragment = TypesAndFactories.newAuthor({ books: [{}] });
+    const author: TypesAndFactories.AuthorBooksDetailsFragment = TypesAndFactories.newAuthor({ books: [{}, {}] });
+    const poppedBook: TypesAndFactories.AuthorBooksDetailsFragment["books"][number] = author.books.pop()!;
     expect(author.books[0].__typename).toEqual("Book");
+    expect(poppedBook.__typename).toEqual("Book");
+  });
+
+  it("returns narrowed interface field typenames as required", () => {
+    const region: TypesAndFactories.RegionChildrenDetailsFragment = TypesAndFactories.newRegion({ children: [{}] });
+    const child: TypesAndFactories.RegionChildrenDetailsFragment["children"][number] = region.children.pop()!;
+    expect(child.__typename).toEqual("Market");
   });
 
   it("accepts factory results as nested options", () => {
@@ -189,6 +197,25 @@ describe("typescript-factories", () => {
     expect(author.books[0].__typename).toEqual("Book");
     expect(searchResults.result1?.__typename).toEqual("Book");
     expect(child.parent.name).toEqual("name");
+  });
+
+  it("allows factory results in helpers typed as partial schema objects", () => {
+    function renderBooks(books: Partial<TypesAndFactories.Book>[] = []): Partial<TypesAndFactories.Book>[] {
+      return books;
+    }
+    function renderCalendarIntervals(
+      intervals: Partial<TypesAndFactories.CalendarInterval>[] = [],
+    ): Partial<TypesAndFactories.CalendarInterval>[] {
+      return intervals;
+    }
+
+    const book = TypesAndFactories.newBook();
+    const calendarInterval = TypesAndFactories.newCalendarInterval();
+    const rawBook: TypesAndFactories.Book = book;
+    const books = renderBooks([book]);
+    const intervals = renderCalendarIntervals([calendarInterval]);
+    expect(rawBook.__typename).toEqual("Book");
+    expect(intervals[0].__typename).toEqual("CalendarInterval");
   });
 
   getTests("types-in-file");

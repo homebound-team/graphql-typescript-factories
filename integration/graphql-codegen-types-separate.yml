@@ -2,6 +2,8 @@ overwrite: true
 schema: "./integration/schema.graphql"
 documents: "./integration/operations.graphql"
 config:
+  scalars:
+    Date: Date
   scalarDefaults:
     Date: "./testData#newDate"
   taggedIds:

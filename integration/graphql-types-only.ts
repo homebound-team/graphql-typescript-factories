@@ -12,7 +12,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  Date: { input: any; output: any; }
+  Date: { input: Date; output: Date; }
 };
 
 export type Author = Named & {
@@ -73,6 +73,12 @@ export type Child = Named & {
   parent: Named;
 };
 
+export type Market = Project & {
+  __typename?: 'Market';
+  children: Array<Project>;
+  name: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   saveAuthor: SaveAuthorResult;
@@ -104,6 +110,11 @@ export type PopularityDetail = Named & {
   name: Scalars['String']['output'];
 };
 
+export type Project = {
+  children: Array<Project>;
+  name: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   authorSummaries: Array<AuthorSummary>;
@@ -119,6 +130,12 @@ export type QueryAuthorsArgs = {
 
 export type QuerySearchArgs = {
   query: Scalars['String']['input'];
+};
+
+export type Region = Project & {
+  __typename?: 'Region';
+  children: Array<Market>;
+  name: Scalars['String']['output'];
 };
 
 export type SaveAuthorResult = {
@@ -150,3 +167,5 @@ export type WorkingDetail = {
 export type SearchResultsDetailsFragment = { __typename?: 'SearchResults', result1?: { __typename: 'Author', id: string, name: string } | { __typename: 'Book', name: string } | null };
 
 export type AuthorBooksDetailsFragment = { __typename?: 'Author', books: Array<{ __typename: 'Book', name: string }> };
+
+export type RegionChildrenDetailsFragment = { __typename?: 'Region', children: Array<{ __typename: 'Market', name: string }> };

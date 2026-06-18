@@ -12,7 +12,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  Date: { input: any; output: any; }
+  Date: { input: Date; output: Date; }
 };
 
 export type Author = Named & {
@@ -73,6 +73,12 @@ export type Child = Named & {
   parent: Named;
 };
 
+export type Market = Project & {
+  __typename?: 'Market';
+  children: Array<Project>;
+  name: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   saveAuthor: SaveAuthorResult;
@@ -104,6 +110,11 @@ export type PopularityDetail = Named & {
   name: Scalars['String']['output'];
 };
 
+export type Project = {
+  children: Array<Project>;
+  name: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   authorSummaries: Array<AuthorSummary>;
@@ -119,6 +130,12 @@ export type QueryAuthorsArgs = {
 
 export type QuerySearchArgs = {
   query: Scalars['String']['input'];
+};
+
+export type Region = Project & {
+  __typename?: 'Region';
+  children: Array<Market>;
+  name: Scalars['String']['output'];
 };
 
 export type SaveAuthorResult = {
@@ -151,6 +168,8 @@ export type SearchResultsDetailsFragment = { __typename?: 'SearchResults', resul
 
 export type AuthorBooksDetailsFragment = { __typename?: 'Author', books: Array<{ __typename: 'Book', name: string }> };
 
+export type RegionChildrenDetailsFragment = { __typename?: 'Region', children: Array<{ __typename: 'Market', name: string }> };
+
 import { newDate } from "./testData";
 
 const factories: Record<string, Function> = {};
@@ -167,15 +186,14 @@ type RequireTypename<T extends { __typename?: string }> = Omit<T, "__typename"> 
  * separate case: these factories always assign __typename recursively at runtime, so their
  * public return type should expose that stronger shape without changing the base schema types.
  */
-type FactoryResult<T> = T extends ReadonlyArray<infer U> ? Array<FactoryResult<U>> : T extends object
-  // Rebuild the object instead of intersecting with T, so raw nested field types do not leak through arrays.
-  // I.e. Author.books.pop() should return a Book with required __typename, not the raw schema Book.
-  ? "__typename" extends keyof T
-    ? Omit<{ [K in keyof T]: FactoryResult<T[K]> }, "__typename"> & {
-      __typename: NonNullable<T extends { __typename?: infer N } ? N : never>;
-    }
-  : T
-: T;
+type FactoryResult<T> = T extends ReadonlyArray<infer U> ? Array<FactoryResult<U>>
+  : T extends object
+    ? "__typename" extends keyof T
+      ? T & Omit<{ [K in keyof T]: FactoryResult<T[K]> }, "__typename"> & {
+        __typename: NonNullable<T extends { __typename?: infer N } ? N : never>;
+      }
+    : T
+  : T;
 
 type FactoryInput<T, TOptions> = T | FactoryResult<T> | TOptions;
 type FactoryCache = Record<string, any> & { active?: Set<object>; all?: Set<object>; withCycles?: boolean };
@@ -371,6 +389,33 @@ export function newChild(
 
 factories["Child"] = newChild;
 
+export interface MarketOptions {
+  __typename?: "Market";
+  children?: Array<Project | FactoryResult<ProjectType> | ProjectOptions>;
+  name?: Market["name"];
+}
+
+export function newMarket(options?: MarketOptions, factoryOptions?: FactoryOptions): FactoryResult<Market>;
+export function newMarket(
+  options: MarketOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): FactoryResult<Market> {
+  const o = (options.__typename ? options : cache["Market"] = {}) as Market;
+  (cache.all ??= new Set()).add(o);
+  (cache.active ??= new Set()).add(o);
+  try {
+    o.__typename = "Market";
+    o.children = (options.children ?? []).map((i) => maybeNew("Project", i, cache, options.hasOwnProperty("children")));
+    o.name = options.name ?? "name";
+    return o as FactoryResult<Market>;
+  } finally {
+    cache.active?.delete(o);
+  }
+}
+
+factories["Market"] = newMarket;
+
 export interface ParentOptions {
   __typename?: "Parent";
   children?: Array<Named | FactoryResult<NamedType> | NamedOptions>;
@@ -427,6 +472,33 @@ export function newPopularityDetail(
 }
 
 factories["PopularityDetail"] = newPopularityDetail;
+
+export interface RegionOptions {
+  __typename?: "Region";
+  children?: Array<FactoryInput<Market, MarketOptions>>;
+  name?: Region["name"];
+}
+
+export function newRegion(options?: RegionOptions, factoryOptions?: FactoryOptions): FactoryResult<Region>;
+export function newRegion(
+  options: RegionOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): FactoryResult<Region> {
+  const o = (options.__typename ? options : cache["Region"] = {}) as Region;
+  (cache.all ??= new Set()).add(o);
+  (cache.active ??= new Set()).add(o);
+  try {
+    o.__typename = "Region";
+    o.children = (options.children ?? []).map((i) => maybeNew("Market", i, cache, options.hasOwnProperty("children")));
+    o.name = options.name ?? "name";
+    return o as FactoryResult<Region>;
+  } finally {
+    cache.active?.delete(o);
+  }
+}
+
+factories["Region"] = newRegion;
 
 export interface SaveAuthorResultOptions {
   __typename?: "SaveAuthorResult";
@@ -561,6 +633,37 @@ export function newNamed(
 }
 
 factories["Named"] = newNamed;
+
+export type ProjectOptions = MarketOptions | RequireTypename<RegionOptions>;
+
+export type ProjectType = Market | Region;
+
+export type ProjectTypeName = "Market" | "Region";
+
+export function newProject(): FactoryResult<Market>;
+export function newProject(options: MarketOptions, factoryOptions?: FactoryOptions): FactoryResult<Market>;
+export function newProject(
+  options: RequireTypename<RegionOptions>,
+  factoryOptions?: FactoryOptions,
+): FactoryResult<Region>;
+export function newProject(
+  options: ProjectOptions = {},
+  factoryOptions: FactoryOptions = {},
+  cache: FactoryCache = newFactoryCache(factoryOptions),
+): FactoryResult<ProjectType> {
+  const { __typename = "Market" } = options ?? {};
+  const shouldUseCache = Object.keys(options).length === 0;
+  const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;
+  if (maybeCached !== undefined) {
+    return maybeCached;
+  }
+  if (shouldUseCache && hasActiveCachedValue(__typename, cache)) {
+    return undefined as any;
+  }
+  return maybeNew(__typename, options ?? {}, cache);
+}
+
+factories["Project"] = newProject;
 
 const enumDetailNameOfPopularity = { High: "High", Low: "Low" };
 
