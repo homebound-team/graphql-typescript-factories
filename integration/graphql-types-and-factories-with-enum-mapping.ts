@@ -622,12 +622,9 @@ export function newNamed(
 ): FactoryResult<NamedType> {
   const { __typename = "Author" } = options ?? {};
   const shouldUseCache = Object.keys(options).length === 0;
-  const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;
-  if (maybeCached !== undefined) {
-    return maybeCached;
-  }
-  if (shouldUseCache && hasActiveCachedValue(__typename, cache)) {
-    return undefined as any;
+  const cachedValue = shouldUseCache ? cache[__typename] : undefined;
+  if (cachedValue !== undefined) {
+    return reuseWouldCreateCycle(cache, cachedValue) ? undefined as any : cachedValue;
   }
   return maybeNew(__typename, options ?? {}, cache);
 }
@@ -653,12 +650,9 @@ export function newProject(
 ): FactoryResult<ProjectType> {
   const { __typename = "Market" } = options ?? {};
   const shouldUseCache = Object.keys(options).length === 0;
-  const maybeCached = shouldUseCache ? getCachedValue(__typename, cache) : undefined;
-  if (maybeCached !== undefined) {
-    return maybeCached;
-  }
-  if (shouldUseCache && hasActiveCachedValue(__typename, cache)) {
-    return undefined as any;
+  const cachedValue = shouldUseCache ? cache[__typename] : undefined;
+  if (cachedValue !== undefined) {
+    return reuseWouldCreateCycle(cache, cachedValue) ? undefined as any : cachedValue;
   }
   return maybeNew(__typename, options ?? {}, cache);
 }
@@ -742,19 +736,6 @@ function reuseWouldCreateCycle(cache: FactoryCache, value: object): boolean {
   return cache.avoidCycles === true && cache.active?.has(value) === true;
 }
 
-function getCachedValue(type: string, cache: FactoryCache): any {
-  const cachedValue = cache[type];
-  if (cachedValue === undefined) {
-    return undefined;
-  }
-  return reuseWouldCreateCycle(cache, cachedValue) ? undefined : cachedValue;
-}
-
-function hasActiveCachedValue(type: string, cache: FactoryCache): boolean {
-  const cachedValue = cache[type];
-  return cachedValue !== undefined && reuseWouldCreateCycle(cache, cachedValue);
-}
-
 function maybeNew(
   type: string,
   value: { __typename?: string } | object | undefined,
@@ -762,9 +743,12 @@ function maybeNew(
   isSet: boolean = false,
 ): any {
   if (value === undefined) {
-    const cachedValue = getCachedValue(type, cache);
-    if (cachedValue !== undefined || isSet || hasActiveCachedValue(type, cache)) {
-      return cachedValue;
+    if (isSet) {
+      return undefined;
+    }
+    const cachedValue = cache[type];
+    if (cachedValue !== undefined) {
+      return reuseWouldCreateCycle(cache, cachedValue) ? undefined : cachedValue;
     }
     return factories[type]({}, undefined, cache);
   } else if ("__typename" in value && value.__typename) {
