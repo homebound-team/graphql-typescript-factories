@@ -139,6 +139,13 @@ const getTests = (testType: TestType = "types-in-file") => {
       expect(a.summary).toBeUndefined();
     });
 
+    it("keeps nested property as undefined if cache has a matching object", () => {
+      const a = newAuthor({ summary: { author: undefined } });
+      expect(a.__typename).toEqual("Author");
+      expect(a.summary.author).toBeUndefined();
+      expect(() => JSON.stringify(a)).not.toThrow();
+    });
+
     it("generates property if option is not passed", () => {
       const a = newAuthor({});
       expect(a.summary.__typename).toEqual("AuthorSummary");
