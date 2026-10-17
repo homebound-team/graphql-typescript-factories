@@ -19,7 +19,7 @@ workflows:
             - dockerhub
       - publish:
           context:
-            - npm-publish
+            - npm-trusted-publish
             - github
             - dockerhub
           requires:
@@ -33,7 +33,6 @@ commands:
   bootstrap:
     steps:
       - checkout
-      - run: 'echo "npmAuthToken: $NPM_TOKEN" >> ${HOME}/.yarnrc.yml'
       - node/install-packages:
           pkg-manager: yarn-berry
           with-cache: true
@@ -57,4 +56,6 @@ jobs:
       - bootstrap
       - run: yarn build
       - run: ./bump.sh package.json
-      - run: yarn npm publish
+      - run: |
+          export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud":"npm:registry.npmjs.org"}')
+          yarn npm publish
